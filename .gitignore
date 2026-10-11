@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local environment / editor state
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# `dist/` is intentionally tracked so the built site can be served straight from the repo
