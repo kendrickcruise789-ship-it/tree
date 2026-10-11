@@ -13,6 +13,11 @@ browser and shopping state lives in `localStorage`.
 
 ## Quick start
 
+**No commands.** Install [Node.js](https://nodejs.org) once, then double-click **`Open Clotex.bat`**.
+It serves the finished site in `dist/` at http://localhost:8080 and opens your browser.
+
+**Or from the command line:**
+
 ```bash
 npm install
 npm run dev        # http://localhost:3000
