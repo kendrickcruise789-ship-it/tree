@@ -1,0 +1,13 @@
+# Normalise text files to LF in the repository
+* text=auto
+
+# Windows batch files must keep CRLF bytes so the downloaded copy runs from Explorer
+*.bat -text
+*.cmd -text
+
+# Never treat these as text
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.woff2 binary

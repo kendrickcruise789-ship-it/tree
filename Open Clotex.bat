@@ -1,11 +1,10 @@
 @echo off
-setlocal
 cd /d "%~dp0"
-where node >/dev/null 2>nul
-if errorlevel 1 (
-  echo This site needs Node.js to run. Free download: https://nodejs.org
-  pause
-  exit /b 1
-)
+echo.
+echo Starting Clotex. If you see "node is not recognized" below, install Node.js free from
+echo the https://nodejs.org website, then run this again.
+echo.
 node serve.mjs
+echo.
+echo The site has stopped.
 pause
