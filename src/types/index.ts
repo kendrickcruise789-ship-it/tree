@@ -97,4 +97,4 @@ export interface FilterOptions {
   onSaleOnly: boolean;
 }
 
-export type SitePage = 'home' | 'clothing';
+export type SitePage = 'home' | 'clothing' | 'owner';

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product, Currency } from '../types';
 import { formatPrice } from '../utils/currency';
+import { resolveImage } from '../shop/schema';
 import { SafeImage } from './SafeImage';
 import { X, Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { useOverlayBehavior } from '../utils/useOverlayBehavior';
@@ -81,7 +82,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
               >
                 <div className="w-20 h-24 bg-[#F4EFEA] shrink-0 overflow-hidden border border-[#EDE6DC]">
                   <SafeImage
-                    src={product.image}
+                    src={resolveImage(product.image)}
                     alt={product.title}
                     category={product.category}
                     fallbackLabel={product.title}

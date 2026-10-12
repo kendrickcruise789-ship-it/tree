@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product, Currency, ProductColor } from '../types';
 import { formatPrice } from '../utils/currency';
+import { resolveImage } from '../shop/schema';
 import { SafeImage } from './SafeImage';
 import { Heart, Eye, ShoppingBag } from 'lucide-react';
 
@@ -33,7 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Visual Image Slot */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F4EFEA]">
         <SafeImage
-          src={product.image}
+          src={resolveImage(product.image)}
           alt={product.title}
           category={product.category}
           fallbackLabel={product.title}

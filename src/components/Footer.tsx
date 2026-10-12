@@ -5,12 +5,14 @@ interface FooterProps {
   onSelectCategory: (category: string) => void;
   onOpenSizeGuide: () => void;
   onOpenTracking: () => void;
+  onOpenOwner: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onSelectCategory,
   onOpenSizeGuide,
   onOpenTracking,
+  onOpenOwner,
 }) => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -152,6 +154,11 @@ export const Footer: React.FC<FooterProps> = ({
                   Track Consignment
                 </button>
               </li>
+              <li>
+                <button onClick={onOpenOwner} className="hover:text-white transition-colors">
+                  Shop Owner Panel
+                </button>
+              </li>
               <li className="text-[#8D8275]">
                 Complimentary Shipping &amp; Returns
               </li>
@@ -164,14 +171,15 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 4 */}
           <div className="space-y-3">
             <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#E8DDD1]">
-              Secure Gateways
+              Payment screens
             </p>
             <p className="text-[#A89C8F] leading-relaxed text-[11px]">
-              256-bit encrypted checkout supporting Visa, Mastercard, RuPay, UPI, 1-Tap Pay, and Verified COD.
+              Card, UPI and cash-on-delivery screens here are a demonstration: nothing is
+              charged, and no email or SMS is sent.
             </p>
             <div className="pt-1 flex items-center gap-2 text-[#7A6B5D] text-[10px] uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5 text-[#2F6F4E]" />
-              <span>PCI-DSS Level 1 Compliant</span>
+              <span>Demo storefront</span>
             </div>
           </div>
 

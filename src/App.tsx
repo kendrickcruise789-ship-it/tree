@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Product, CartItem, Currency, ProductColor, OrderConfirmationData, UserAccount, FilterOptions, SitePage } from './types';
-import { PRODUCTS, MAX_PRICE_CEILING, categoryLabel } from './data/products';
+import { MAX_PRICE_CEILING, categoryLabel } from './data/products';
+import { loadCatalogue, bundledCatalogue, CURRENCY_CODES, type CatalogueSource } from './shop/api';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
 import { CategoryNav } from './components/CategoryNav';
@@ -15,32 +16,152 @@ import { CheckoutPaymentModal } from './components/CheckoutPaymentModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { AuthModal } from './components/AuthModal';
 import { HomePage } from './components/HomePage';
+import { OwnerPanel } from './components/owner/OwnerPanel';
 import { MarqueeStrip } from './components/MarqueeStrip';
 import { AnimatedHeadline } from './components/AnimatedHeadline';
 import { Reveal } from './components/Reveal';
 import { Footer } from './components/Footer';
 
 const STORAGE_KEY = 'clotex_state_v1';
+const USER_KEY = 'clotex_user';
+const KNOWN_COUPONS = new Set(['CLOTEX10', 'WELCOME15']);
+const MAX_CART_LINES = 60;
+const MAX_QUANTITY_PER_LINE = 99;
+
+/**
+ * A saved bag holds ids, never prices or product copies: the amount a shopper pays
+ * always comes from the catalogue the shop is serving right now.
+ */
+interface CartLine {
+  productId: string;
+  size: string;
+  color: string;
+  quantity: number;
+}
 
 interface PersistedState {
-  cartItems: CartItem[];
+  cartLines: CartLine[];
   wishlistIds: string[];
   currency: Currency;
   appliedCoupon: string;
   giftWrap: boolean;
 }
 
-function readPersisted(): Partial<PersistedState> {
+const isCurrency = (value: unknown): value is Currency =>
+  typeof value === 'string' && (CURRENCY_CODES as string[]).includes(value);
+
+const firstString = (...candidates: unknown[]): string => {
+  for (const candidate of candidates) if (typeof candidate === 'string' && candidate) return candidate;
+  return '';
+};
+
+function readCartLines(raw: unknown): CartLine[] {
+  if (!Array.isArray(raw)) return [];
+  const lines = new Map<string, CartLine>();
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const record = entry as Record<string, unknown>;
+    // Bags saved by the earlier build stored a whole product per line; only its id is reused.
+    const legacyProduct = record.product && typeof record.product === 'object' && !Array.isArray(record.product)
+      ? (record.product as Record<string, unknown>)
+      : {};
+    const legacyColor = record.selectedColor && typeof record.selectedColor === 'object' && !Array.isArray(record.selectedColor)
+      ? (record.selectedColor as Record<string, unknown>)
+      : {};
+    const productId = firstString(record.productId, legacyProduct.id);
+    const size = firstString(record.size, record.selectedSize);
+    const color = firstString(record.color, legacyColor.name);
+    const quantity = typeof record.quantity === 'number' ? record.quantity : Number(record.quantity);
+    if (!productId || !size || !Number.isInteger(quantity) || quantity < 1) continue;
+    const key = `${productId}|${size}|${color}`;
+    const kept = lines.get(key);
+    lines.set(key, {
+      productId,
+      size,
+      color,
+      quantity: Math.min(MAX_QUANTITY_PER_LINE, (kept?.quantity ?? 0) + quantity),
+    });
+    if (lines.size >= MAX_CART_LINES) break;
+  }
+  return [...lines.values()];
+}
+
+// Anything the browser hands back is treated as untrusted input, including a bag the
+// owner edited by hand in dev tools.
+function readPersisted(): PersistedState {
+  let parsed: unknown = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Partial<PersistedState>) : {};
+    parsed = raw ? JSON.parse(raw) : null;
   } catch {
-    return {};
+    parsed = null;
+  }
+  const record = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : {};
+  const wishlistIds = Array.isArray(record.wishlistIds)
+    ? record.wishlistIds.filter((id): id is string => typeof id === 'string' && id.length <= 64).slice(0, 200)
+    : [];
+  const coupon = typeof record.appliedCoupon === 'string' && KNOWN_COUPONS.has(record.appliedCoupon)
+    ? record.appliedCoupon
+    : '';
+  return {
+    cartLines: readCartLines(record.cartLines ?? record.cartItems),
+    wishlistIds,
+    currency: isCurrency(record.currency) ? record.currency : 'USD',
+    appliedCoupon: coupon,
+    giftWrap: record.giftWrap === true,
+  };
+}
+
+function readPersistedUser(): UserAccount | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const record = parsed as Record<string, unknown>;
+    const id = firstString(record.id);
+    const fullName = firstString(record.fullName);
+    const email = firstString(record.email);
+    if (!id || !fullName || !email) return null;
+    // Addresses stay out of long-lived storage: checkout re-asks for them.
+    return { id, fullName, email, phone: firstString(record.phone) || undefined };
+  } catch {
+    return null;
   }
 }
 
-const pageFromHash = (): SitePage => (window.location.hash === '#clothing' ? 'clothing' : 'home');
-const pageHash = (page: SitePage) => (page === 'clothing' ? '#clothing' : '#home');
+/**
+ * Turns saved ids into bag lines against the live catalogue. A line whose piece was
+ * retired or sold out stays in storage but is hidden until it is buyable again.
+ */
+function rehydrateCart(lines: CartLine[], catalogue: Product[]): CartItem[] {
+  const items: CartItem[] = [];
+  for (const line of lines) {
+    const product = catalogue.find((p) => p.id === line.productId);
+    if (!product) continue;
+    const selectedColor = product.colors.find((c) => c.name === line.color) ?? product.colors[0];
+    if (!selectedColor || !product.sizes.includes(line.size)) continue;
+    const stock = product.stockPerSize[line.size] ?? 0;
+    if (stock <= 0) continue;
+    items.push({
+      product,
+      selectedSize: line.size,
+      selectedColor,
+      quantity: Math.min(stock, Math.max(1, line.quantity)),
+    });
+  }
+  return items;
+}
+
+const pageFromHash = (): SitePage => {
+  const hash = window.location.hash;
+  if (hash === '#clothing') return 'clothing';
+  if (hash === '#owner') return 'owner';
+  return 'home';
+};
+const pageHash = (page: SitePage) => (page === 'clothing' ? '#clothing' : page === 'owner' ? '#owner' : '#home');
 
 export default function App() {
   const persisted = useMemo(readPersisted, []);
@@ -48,29 +169,32 @@ export default function App() {
   // Which half of the site the visitor is standing in
   const [page, setPage] = useState<SitePage>(pageFromHash);
 
+  // The catalogue the shop is actually selling from
+  const [catalogue, setCatalogue] = useState<Product[]>(() => bundledCatalogue().products);
+  const [revision, setRevision] = useState(0);
+  const [catalogueSource, setCatalogueSource] = useState<CatalogueSource>('bundled');
+
   // Currency State
-  const [currency, setCurrency] = useState<Currency>(persisted.currency ?? 'USD');
+  const [currency, setCurrency] = useState<Currency>(persisted.currency);
 
   // Authentication State
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    try {
-      const saved = localStorage.getItem('clotex_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(readPersistedUser);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Category & Sorting
   const [activeCategory, setActiveCategory] = useState<string>('All Collections');
   const [sortBy, setSortBy] = useState<string>('featured');
 
-  // Filters State
+  // Filters State — the price range follows the shop's own most expensive piece
+  const priceCeiling = useMemo(() => {
+    const highest = catalogue.reduce((max, p) => Math.max(max, p.price), 0);
+    return Math.max(MAX_PRICE_CEILING, Math.ceil(highest / 5) * 5);
+  }, [catalogue]);
+
   const initialFilters: FilterOptions = {
     category: 'All Collections',
     minPrice: 0,
-    maxPrice: MAX_PRICE_CEILING,
+    maxPrice: priceCeiling,
     fabrics: [],
     sizes: [],
     colors: [],
@@ -80,11 +204,26 @@ export default function App() {
   const [filters, setFilters] = useState<FilterOptions>(initialFilters);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
-  // Cart State
-  const [cartItems, setCartItems] = useState<CartItem[]>(persisted.cartItems ?? []);
+  // When the owner reprices past the old top of the range, a shopper parked at that top
+  // must not silently lose the new pieces.
+  const lastCeiling = useRef(priceCeiling);
+  useEffect(() => {
+    const previous = lastCeiling.current;
+    if (previous === priceCeiling) return;
+    lastCeiling.current = priceCeiling;
+    setFilters((prev) =>
+      prev.maxPrice === previous || prev.maxPrice > priceCeiling
+        ? { ...prev, maxPrice: priceCeiling }
+        : prev,
+    );
+  }, [priceCeiling]);
+
+  // Cart State — the bag is a list of ids, priced against the live catalogue on every render
+  const [cartLines, setCartLines] = useState<CartLine[]>(persisted.cartLines);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<string>(persisted.appliedCoupon ?? '');
-  const [giftWrap, setGiftWrap] = useState<boolean>(persisted.giftWrap ?? false);
+  const [appliedCoupon, setAppliedCoupon] = useState<string>(persisted.appliedCoupon);
+  const [giftWrap, setGiftWrap] = useState<boolean>(persisted.giftWrap);
+  const cartItems = useMemo(() => rehydrateCart(cartLines, catalogue), [cartLines, catalogue]);
 
   // Wishlist State
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(
@@ -147,7 +286,7 @@ export default function App() {
     setFilters({
       category: cat,
       minPrice: 0,
-      maxPrice: MAX_PRICE_CEILING,
+      maxPrice: priceCeiling,
       fabrics: [],
       sizes: [],
       colors: [],
@@ -178,9 +317,52 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
+  // Read the prices the shop is actually selling at. Falls back to the catalogue baked
+  // into this build when there is no shop service behind it.
+  // A catalogue the owner panel just wrote back is live shop data by definition, so a
+  // change without a source only arrives from a successful shop write.
+  const applyCatalogue = useCallback(
+    (result: { products: Product[]; revision: number; source?: CatalogueSource }) => {
+      setCatalogue(result.products);
+      setRevision(result.revision);
+      setCatalogueSource(result.source ?? 'shop');
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadCatalogue(controller.signal).then((result) => {
+      // An aborted read resolves to the baked catalogue; applying it would undo live prices.
+      if (controller.signal.aborted) return;
+      applyCatalogue(result);
+    });
+    return () => controller.abort();
+  }, [applyCatalogue]);
+
+  // Builds before this one stored whole address books; drop those fields on sight.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+      const record = parsed as Record<string, unknown>;
+      const extra = Object.keys(record).filter(
+        (k) => k !== 'id' && k !== 'fullName' && k !== 'email' && k !== 'phone',
+      );
+      if (extra.length === 0) return;
+      const trimmed = readPersistedUser();
+      if (trimmed) localStorage.setItem(USER_KEY, JSON.stringify(trimmed));
+      else localStorage.removeItem(USER_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   // Filtered & Sorted Products
   const displayedProducts = useMemo(() => {
-    let list = [...PRODUCTS];
+    let list = [...catalogue];
 
     // 1. Category Filter: check selected category
     const targetCat = activeCategory !== 'All Collections' ? activeCategory : filters.category;
@@ -195,7 +377,7 @@ export default function App() {
     }
 
     // 2. Price Range (only if user changed range)
-    if (filters.minPrice > 0 || filters.maxPrice < MAX_PRICE_CEILING) {
+    if (filters.minPrice > 0 || filters.maxPrice < priceCeiling) {
       list = list.filter((p) => p.price >= filters.minPrice && p.price <= filters.maxPrice);
     }
 
@@ -241,7 +423,7 @@ export default function App() {
     }
 
     return list;
-  }, [activeCategory, filters, sortBy]);
+  }, [catalogue, activeCategory, filters, sortBy]);
 
   // Active filters count
   const activeFiltersCount = useMemo(() => {
@@ -252,9 +434,9 @@ export default function App() {
     count += filters.colors.length;
     if (filters.inStockOnly) count++;
     if (filters.onSaleOnly && activeCategory !== 'Sale') count++;
-    if (filters.minPrice > 0 || filters.maxPrice < MAX_PRICE_CEILING) count++;
+    if (filters.minPrice > 0 || filters.maxPrice < priceCeiling) count++;
     return count;
-  }, [filters, activeCategory]);
+  }, [filters, activeCategory, priceCeiling]);
 
   const handleResetFilters = () => {
     setFilters({
@@ -265,12 +447,19 @@ export default function App() {
 
   // Auth Handlers
   const handleLoginSuccess = (user: UserAccount, rememberDevice: boolean) => {
-    setCurrentUser(user);
+    // Only what the greeting and checkout pre-fill need; addresses are re-asked for.
+    const trimmed: UserAccount = {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+    };
+    setCurrentUser(trimmed);
     try {
       if (rememberDevice) {
-        localStorage.setItem('clotex_user', JSON.stringify(user));
+        localStorage.setItem(USER_KEY, JSON.stringify(trimmed));
       } else {
-        localStorage.removeItem('clotex_user');
+        localStorage.removeItem(USER_KEY);
       }
     } catch {
       // ignore
@@ -280,7 +469,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     try {
-      localStorage.removeItem('clotex_user');
+      localStorage.removeItem(USER_KEY);
     } catch {
       // ignore
     }
@@ -300,11 +489,13 @@ export default function App() {
   };
 
   const wishlistProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => wishlistIds.has(p.id));
-  }, [wishlistIds]);
+    return catalogue.filter((p) => wishlistIds.has(p.id));
+  }, [catalogue, wishlistIds]);
 
   // Cart Actions
   const stockFor = (product: Product, size: string) => product.stockPerSize[size] ?? 0;
+
+  const lineKey = (line: CartLine) => `${line.productId}|${line.size}|${line.color}`;
 
   const handleAddToCart = (
     product: Product,
@@ -315,62 +506,67 @@ export default function App() {
     const stock = stockFor(product, selectedSize);
     if (stock <= 0) return;
 
-    setCartItems((prev) => {
-      const existingIdx = prev.findIndex(
-        (it) =>
-          it.product.id === product.id &&
-          it.selectedSize === selectedSize &&
-          it.selectedColor.name === selectedColor.name
-      );
-
+    setCartLines((prev) => {
+      const line: CartLine = {
+        productId: product.id,
+        size: selectedSize,
+        color: selectedColor.name,
+        quantity: Math.max(1, quantity),
+      };
+      const existingIdx = prev.findIndex((l) => lineKey(l) === lineKey(line));
       if (existingIdx > -1) {
-        const current = prev[existingIdx].quantity;
         const next = [...prev];
         next[existingIdx] = {
           ...next[existingIdx],
-          quantity: Math.min(stock, current + quantity),
+          quantity: Math.min(stock, next[existingIdx].quantity + line.quantity),
         };
         return next;
       }
-      return [
-        ...prev,
-        {
-          product,
-          selectedSize,
-          selectedColor,
-          quantity: Math.min(stock, quantity),
-        },
-      ];
+      if (prev.length >= MAX_CART_LINES) return prev;
+      return [...prev, { ...line, quantity: Math.min(stock, line.quantity) }];
     });
   };
 
+  // Bag rows are addressed by position, storage by identity: resolve first, then mutate.
   const handleUpdateQuantity = (index: number, newQty: number) => {
+    const target = cartItems[index];
+    if (!target) return;
     if (newQty <= 0) {
       handleRemoveItem(index);
       return;
     }
-    setCartItems((prev) => {
-      const target = prev[index];
-      if (!target) return prev;
+    const line: CartLine = {
+      productId: target.product.id,
+      size: target.selectedSize,
+      color: target.selectedColor.name,
+      quantity: Math.min(stockFor(target.product, target.selectedSize), newQty),
+    };
+    setCartLines((prev) => {
+      const idx = prev.findIndex((l) => lineKey(l) === lineKey(line));
+      if (idx === -1) return [...prev, line];
       const next = [...prev];
-      next[index] = {
-        ...target,
-        quantity: Math.min(stockFor(target.product, target.selectedSize), newQty),
-      };
+      next[idx] = line;
       return next;
     });
   };
 
   const handleRemoveItem = (index: number) => {
-    setCartItems((prev) => prev.filter((_, i) => i !== index));
+    const target = cartItems[index];
+    if (!target) return;
+    const key = lineKey({
+      productId: target.product.id,
+      size: target.selectedSize,
+      color: target.selectedColor.name,
+      quantity: 1,
+    });
+    // Drop every stored copy of that piece, including a hidden sold-out line.
+    setCartLines((prev) => prev.filter((l) => lineKey(l) !== key));
   };
 
   const handleApplyCoupon = (code: string): boolean => {
-    if (code === 'CLOTEX10' || code === 'WELCOME15') {
-      setAppliedCoupon(code);
-      return true;
-    }
-    return false;
+    if (!KNOWN_COUPONS.has(code)) return false;
+    setAppliedCoupon(code);
+    return true;
   };
 
   const handleRemoveCoupon = () => {
@@ -397,8 +593,8 @@ export default function App() {
   };
 
   // Order completed handler
-  const handleOrderCompleted = (order: OrderConfirmationData) => {
-    setCartItems([]);
+  const handleOrderCompleted = (_order: OrderConfirmationData) => {
+    setCartLines([]);
     setAppliedCoupon('');
     setGiftWrap(false);
   };
@@ -407,7 +603,7 @@ export default function App() {
   useEffect(() => {
     try {
       const state: PersistedState = {
-        cartItems,
+        cartLines,
         wishlistIds: [...wishlistIds],
         currency,
         appliedCoupon,
@@ -417,7 +613,7 @@ export default function App() {
     } catch {
       // storage full or unavailable — shopping still works in-memory
     }
-  }, [cartItems, wishlistIds, currency, appliedCoupon, giftWrap]);
+  }, [cartLines, wishlistIds, currency, appliedCoupon, giftWrap]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7] text-[#1E1B18]">
@@ -446,11 +642,43 @@ export default function App() {
         activeCategory={activeCategory}
       />
 
-      {page === 'home' ? (
+      {page === 'owner' ? (
+        /* ============ OWNER: the shop desk ============ */
+        <main className="flex-1">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
+            {catalogueSource !== 'shop' && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border border-[#EDE6DC] bg-[#FBF8F2] px-4 py-3 text-xs text-[#5C5349]">
+                <span>
+                  {catalogueSource === 'unseeded'
+                    ? 'Nothing has been published to this shop yet. The list below is the catalogue baked into the site — restore it to start selling, or add a product.'
+                    : 'The shop service did not answer, so the list below is the catalogue baked into this build. Saving will not change what customers see until it responds.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void loadCatalogue().then(applyCatalogue)}
+                  className="border border-[#1E1B18] text-[#1E1B18] uppercase tracking-[0.12em] px-3 py-1.5 hover:bg-[#1E1B18] hover:text-[#FDFBF7] transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
+          <OwnerPanel
+            products={catalogue}
+            revision={revision}
+            currency={currency}
+            onCatalogueChange={applyCatalogue}
+            onReloadRequested={() => void loadCatalogue().then(applyCatalogue)}
+          />
+        </main>
+      ) : page === 'home' ? (
         /* ============ HOME: the house, its craft, its cloth ============ */
         <HomePage
           onGoToClothing={() => goToPage('clothing')}
           onSelectCategory={handleSelectCategory}
+          products={catalogue}
+          currency={currency}
+          onViewProduct={(product) => setActiveProductModal(product)}
         />
       ) : (
         /* ============ CLOTHING: the shop ============ */
@@ -560,6 +788,7 @@ export default function App() {
         onSelectCategory={handleSelectCategory}
         onOpenSizeGuide={() => setSizeGuideOpen(true)}
         onOpenTracking={() => setTrackingModalOpen(true)}
+        onOpenOwner={() => goToPage('owner')}
       />
 
       {/* DRAWERS & MODALS */}
@@ -569,6 +798,7 @@ export default function App() {
         isOpen={isFilterDrawerOpen}
         filters={filters}
         currency={currency}
+        priceCeiling={priceCeiling}
         onClose={() => setIsFilterDrawerOpen(false)}
         onUpdateFilters={(newFilters) => {
           setFilters(newFilters);
@@ -616,10 +846,10 @@ export default function App() {
         onMoveToBag={handleMoveWishlistToBag}
       />
 
-      {/* Instant Search Dialog */}
+      {/* Search Dialog */}
       <SearchModal
         isOpen={searchModalOpen}
-        products={PRODUCTS}
+        products={catalogue}
         currency={currency}
         onClose={() => setSearchModalOpen(false)}
         onSelectProduct={(p) => setActiveProductModal(p)}

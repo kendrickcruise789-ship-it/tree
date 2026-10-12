@@ -468,7 +468,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
         <div className="mt-6 pt-4 border-t border-[#EDE6DC] text-center text-[11px] text-[#7A6B5D] flex items-center justify-center gap-2">
           <ShieldCheck className="w-3.5 h-3.5 text-[#2F6F4E]" />
-          <span>SSL 256-Bit Encrypted Authentication</span>
+          <span>Demo sign-in &mdash; this account lives in your browser only</span>
         </div>
 
       </div>

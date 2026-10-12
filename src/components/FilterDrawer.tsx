@@ -9,6 +9,8 @@ interface FilterDrawerProps {
   isOpen: boolean;
   filters: FilterOptions;
   currency: Currency;
+  /** Top of the price slider. Defaults to the baked catalogue's most expensive piece. */
+  priceCeiling?: number;
   onClose: () => void;
   onUpdateFilters: (newFilters: FilterOptions) => void;
   onResetFilters: () => void;
@@ -19,6 +21,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   isOpen,
   filters,
   currency,
+  priceCeiling = MAX_PRICE_CEILING,
   onClose,
   onUpdateFilters,
   onResetFilters,
@@ -67,7 +70,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
     filters.colors.length +
     (filters.inStockOnly ? 1 : 0) +
     (filters.onSaleOnly ? 1 : 0) +
-    (filters.maxPrice < MAX_PRICE_CEILING || filters.minPrice > 0 ? 1 : 0);
+    (filters.maxPrice < priceCeiling || filters.minPrice > 0 ? 1 : 0);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
@@ -149,7 +152,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
             <input
               type="range"
               min="0"
-              max={MAX_PRICE_CEILING}
+              max={priceCeiling}
               step="5"
               value={filters.maxPrice}
               aria-label="Maximum price"
@@ -163,8 +166,8 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
             />
             <div className="flex justify-between text-[11px] text-[#A89C8F]">
               <span>{formatPrice(0, currency)}</span>
-              <span>{formatPrice(MAX_PRICE_CEILING / 2, currency)}</span>
-              <span>{formatPrice(MAX_PRICE_CEILING, currency)}+</span>
+              <span>{formatPrice(priceCeiling / 2, currency)}</span>
+              <span>{formatPrice(priceCeiling, currency)}+</span>
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CartItem, Currency } from '../types';
 import { formatPrice } from '../utils/currency';
+import { resolveImage } from '../shop/schema';
 import {
   FREE_SHIPPING_THRESHOLD_USD,
   EXPRESS_SHIPPING_FEE_USD,
@@ -164,7 +165,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 {/* Thumbnail */}
                 <div className="w-20 h-24 bg-[#F4EFEA] shrink-0 overflow-hidden border border-[#EDE6DC]">
                   <SafeImage
-                    src={item.product.image}
+                    src={resolveImage(item.product.image)}
                     alt={item.product.title}
                     category={item.product.category}
                     fallbackLabel={item.product.title}
@@ -328,7 +329,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             {/* Security pledge */}
             <div className="flex items-center justify-center gap-2 text-[11px] text-[#7A6B5D]">
               <ShieldCheck className="w-3.5 h-3.5 text-[#2F6F4E]" />
-              <span>256-Bit SSL Encrypted Payment Gateway</span>
+              <span>Demo checkout &mdash; no card is charged</span>
             </div>
 
           </div>

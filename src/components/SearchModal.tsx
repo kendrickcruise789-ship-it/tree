@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Product, Currency } from '../types';
 import { formatPrice } from '../utils/currency';
+import { resolveImage } from '../shop/schema';
 import { SafeImage } from './SafeImage';
 import { Search, X, ArrowRight } from 'lucide-react';
 import { useOverlayBehavior } from '../utils/useOverlayBehavior';
@@ -132,7 +133,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <SafeImage
-                      src={p.image}
+                      src={resolveImage(p.image)}
                       alt={p.title}
                       category={p.category}
                       fallbackLabel={p.title}

@@ -1,5 +1,7 @@
 import React from 'react';
+import { Currency, Product } from '../types';
 import { categoryLabel } from '../data/products';
+import { FeaturedBoard } from './home/FeaturedBoard';
 import { HeroSection } from './HeroSection';
 import { MarqueeStrip } from './MarqueeStrip';
 import { ArtisanCraftSection } from './ArtisanCraftSection';
@@ -14,6 +16,9 @@ import { ArrowRight } from 'lucide-react';
 interface HomePageProps {
   onGoToClothing: () => void;
   onSelectCategory: (category: string) => void;
+  products: Product[];
+  currency: Currency;
+  onViewProduct: (product: Product) => void;
 }
 
 const FACTS = [
@@ -37,12 +42,27 @@ const scrollToCraft = () => {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 };
 
-export const HomePage: React.FC<HomePageProps> = ({ onGoToClothing, onSelectCategory }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  onGoToClothing,
+  onSelectCategory,
+  products,
+  currency,
+  onViewProduct,
+}) => {
   return (
     <>
       <HeroSection onShopClick={onGoToClothing} onCraftClick={scrollToCraft} />
 
       <MarqueeStrip />
+
+      {/* The exhibition: what the shop is pushing right now, from the live catalogue */}
+      <FeaturedBoard
+        products={products}
+        currency={currency}
+        onShopCategory={onSelectCategory}
+        onViewProduct={onViewProduct}
+        onGoToClothing={onGoToClothing}
+      />
 
       {/* What the house actually does */}
       <section className="py-14 lg:py-20 bg-[#FDFBF7] border-b border-[#EDE6DC]">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CartItem, Currency, CustomerDetails, PaymentMethod, OrderConfirmationData, UserAccount } from '../types';
 import { formatPrice } from '../utils/currency';
+import { resolveImage } from '../shop/schema';
 import { SafeImage } from './SafeImage';
 import {
   FREE_SHIPPING_THRESHOLD_USD,
@@ -186,7 +187,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
     setFormError('');
     setStep(3); // Show Processing State
 
-    // Simulate 256-bit gateway verification
+    // Staged delay so the demo reads like a gateway round-trip; no request is made.
     setTimeout(() => {
       const orderId = `CTX-${Math.floor(100000 + Math.random() * 900000)}`;
       const orderData: OrderConfirmationData = {
@@ -268,7 +269,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
             <span className="text-[#C5BDB3]">|</span>
             <span className="text-xs uppercase tracking-wider text-[#7A6B5D] font-medium flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-[#2F6F4E]" />
-              Secure 256-Bit Payment Gateway
+              Demo gateway &mdash; nothing is charged
             </span>
           </div>
 
@@ -464,7 +465,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
                   {items.map((item, i) => (
                     <div key={i} className="flex gap-3 text-xs bg-white p-2.5 border border-[#EDE6DC]">
                       <SafeImage
-                        src={item.product.image}
+                        src={resolveImage(item.product.image)}
                         alt={item.product.title}
                         category={item.product.category}
                         fallbackLabel={item.product.title}
@@ -690,7 +691,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
                           onChange={(e) => setSaveCard(e.target.checked)}
                           className="rounded text-[#1E1B18]"
                         />
-                        <span>Save card securely for seamless 1-click future checkout</span>
+                        <span>Tick to see the saved-card step (nothing is actually stored)</span>
                       </label>
                     </div>
                   )}
@@ -811,10 +812,10 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
                 <div className="flex items-center justify-center gap-4 text-[11px] text-[#7A6B5D]">
                   <span className="flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#2F6F4E]" />
-                    PCI-DSS Level 1 Certified
+                    Demo order &mdash; no payment taken
                   </span>
                   <span>·</span>
-                  <span>Instant SMS & Email Receipt</span>
+                  <span>Receipt is shown here, never sent</span>
                 </div>
               </div>
 
@@ -940,7 +941,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
                   <div key={i} className="p-4 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-3">
                       <SafeImage
-                        src={it.product.image}
+                        src={resolveImage(it.product.image)}
                         alt={it.product.title}
                         category={it.product.category}
                         fallbackLabel={it.product.title}
@@ -962,7 +963,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
 
               {/* Total Paid */}
               <div className="p-4 bg-[#F7F3ED] border border-[#EDE6DC] flex items-center justify-between text-sm">
-                <span className="font-medium text-[#1E1B18]">Total Paid (256-Bit SSL Cleared)</span>
+                <span className="font-medium text-[#1E1B18]">Order total (demo)</span>
                 <span className="font-bold text-lg text-[#1E1B18] tabular-nums">
                   {formatPrice(confirmedOrder.total, confirmedOrder.currency)}
                 </span>

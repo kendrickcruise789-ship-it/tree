@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, Currency, ProductColor } from '../types';
 import { formatPrice } from '../utils/currency';
+import { resolveImage } from '../shop/schema';
 import { SafeImage } from './SafeImage';
 import {
   X,
@@ -102,7 +103,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="md:col-span-6 space-y-4">
             <div className="relative aspect-[3/4] w-full bg-[#F4EFEA] overflow-hidden border border-[#EDE6DC]">
               <SafeImage
-                src={product.image}
+                src={resolveImage(product.image)}
                 alt={product.title}
                 category={product.category}
                 fallbackLabel={product.title}
