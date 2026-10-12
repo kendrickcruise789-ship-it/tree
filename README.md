@@ -34,8 +34,9 @@ npm run dev        # http://localhost:3000
 
 ```
 src/
-  App.tsx                 central state: cart, wishlist, currency, filters, session
-  components/             19 screens and overlays (product grid, drawers, checkout, modals)
+  App.tsx                 central state: page, cart, wishlist, currency, filters, session
+  components/             screens and overlays (home sections, product grid, drawers, checkout, modals)
+  hooks/useParallax.ts    scroll drift used by the two large photographs
   data/products.ts        the whole catalogue, currencies, filter vocabularies, shipping rules
   utils/                  price formatting, overlay behaviour, image fallbacks
 public/                   favicon and social preview image
@@ -44,6 +45,21 @@ dist/                     committed production build
 
 The catalogue is plain TypeScript, so adding or editing a product means editing one array in
 `src/data/products.ts` — the price filter ceiling and colour vocabulary derive from it.
+
+## The two pages
+
+The site has a **Home** page (the house: what it makes, how, in which cloth, how to care for it) and a
+**Clothing** page (the shop: filters, sort and the product grid). The navbar switches between them and
+mirrors the choice in the URL — `#home` and `#clothing` are shareable and the browser back button works.
+There is no router library; the page is one piece of state in `App.tsx`.
+
+The home-textile category is stored as `Home` but displayed as **Home & Living** (`categoryLabel` in
+`src/data/products.ts`) so it cannot be confused with the Home page.
+
+Motion is plain CSS plus one `IntersectionObserver`: word-by-word headline wipes, a marquee strip,
+scroll reveals with a stagger, count-up statistics and image parallax. Everything is disabled under
+`prefers-reduced-motion`, and reveal wrappers show themselves immediately if they are already on screen
+when mounted, so content can never stay hidden.
 
 ## How the storefront behaves
 

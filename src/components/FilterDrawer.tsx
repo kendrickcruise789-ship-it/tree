@@ -1,6 +1,6 @@
 import React from 'react';
 import { FilterOptions, ProductCategory, Currency } from '../types';
-import { CATEGORIES, ALL_FABRICS, ALL_SIZES, ALL_COLORS, MAX_PRICE_CEILING } from '../data/products';
+import { CATEGORIES, categoryLabel, ALL_FABRICS, ALL_SIZES, ALL_COLORS, MAX_PRICE_CEILING } from '../data/products';
 import { formatPrice } from '../utils/currency';
 import { X, RotateCcw, Check } from 'lucide-react';
 import { useOverlayBehavior } from '../utils/useOverlayBehavior';
@@ -129,7 +129,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
                         : 'bg-white text-[#5C5349] border-[#EDE6DC] hover:border-[#B8ACA0]'
                     }`}
                   >
-                    {cat}
+                    {categoryLabel(cat)}
                   </button>
                 );
               })}

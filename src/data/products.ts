@@ -51,6 +51,15 @@ export const CATEGORIES: (ProductCategory | 'All Collections')[] = [
   'Sale',
 ];
 
+// Display-only labels. The stored category value stays 'Home' so filtering,
+// persisted filters and the category matching keep working.
+const CATEGORY_LABELS: Record<string, string> = {
+  Home: 'Home & Living',
+  'All Collections': 'All Collections',
+};
+
+export const categoryLabel = (category: string): string => CATEGORY_LABELS[category] ?? category;
+
 export const ALL_FABRICS = [
   'Organic Mulmul Cotton',
   'Chanderi Silk-Cotton',

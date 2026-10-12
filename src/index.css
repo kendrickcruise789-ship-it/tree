@@ -27,3 +27,118 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #CFC5B8;
 }
+
+/* ---------- Motion layer (Home + Clothing) ---------- */
+
+/* Hides the 6px scrollbar on horizontally scrolling nav rows */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+  display: none;
+}
+
+/* Headline words wipe in one after another */
+@keyframes clotex-word-in {
+  0% {
+    opacity: 0;
+    transform: translateY(0.34em) scale(0.96);
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 -4% 0 0);
+  }
+}
+.clotex-word {
+  display: inline-block;
+  opacity: 0;
+  animation: clotex-word-in 0.72s cubic-bezier(0.22, 0.9, 0.28, 1) forwards;
+}
+
+/* Infinite scrolling marquee strip */
+@keyframes clotex-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.clotex-marquee {
+  display: flex;
+  width: max-content;
+  animation: clotex-marquee 34s linear infinite;
+}
+.clotex-marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+/* Scroll-triggered reveals (opacity + transform transition, delay via CSS var)
+   Scoped to .js-motion so content is never hidden if the bundle fails to run. */
+.js-motion .reveal {
+  opacity: 0;
+  transform: translate3d(var(--rv-x, 0), var(--rv-y, 26px), 0) scale(var(--rv-scale, 1));
+  transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.2, 0.75, 0.25, 1);
+  transition-delay: var(--rv-delay, 0ms);
+}
+.js-motion .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+.reveal--pop {
+  --rv-scale: 0.93;
+  --rv-y: 16px;
+}
+.reveal--side {
+  --rv-x: -32px;
+  --rv-y: 0;
+}
+.reveal--fade {
+  --rv-y: 0;
+}
+
+/* Panel swap used by the fabric guide tabs */
+@keyframes clotex-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.clotex-fade-up {
+  animation: clotex-fade-up 0.45s ease-out both;
+}
+
+/* Underline that draws itself */
+@keyframes clotex-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.clotex-draw {
+  transform-origin: left center;
+  animation: clotex-draw 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .clotex-word,
+  .clotex-fade-up,
+  .clotex-draw {
+    animation-duration: 0.001s !important;
+    animation-delay: 0ms !important;
+    opacity: 1;
+  }
+  .clotex-marquee {
+    animation: none;
+  }
+  /* Nothing may depend on an observer firing when motion is switched off */
+  .js-motion .reveal,
+  .js-motion .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition-duration: 0.001s;
+    transition-delay: 0ms;
+  }
+}

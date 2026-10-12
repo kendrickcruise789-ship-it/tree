@@ -1,5 +1,5 @@
 import React from 'react';
-import { CATEGORIES } from '../data/products';
+import { CATEGORIES, categoryLabel } from '../data/products';
 import { SlidersHorizontal, Filter } from 'lucide-react';
 
 interface CategoryNavProps {
@@ -42,7 +42,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
                     : 'text-[#5C5349] hover:text-[#1E1B18] hover:bg-[#F3EFEA]'
                 }`}
               >
-                {cat}
+                {categoryLabel(cat)}
               </button>
             );
           })}

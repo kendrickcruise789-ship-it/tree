@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Product, CartItem, Currency, ProductColor, OrderConfirmationData, UserAccount, FilterOptions } from './types';
-import { PRODUCTS, HERO_IMAGE, MAX_PRICE_CEILING } from './data/products';
+import { Product, CartItem, Currency, ProductColor, OrderConfirmationData, UserAccount, FilterOptions, SitePage } from './types';
+import { PRODUCTS, MAX_PRICE_CEILING, categoryLabel } from './data/products';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
 import { CategoryNav } from './components/CategoryNav';
 import { FilterDrawer } from './components/FilterDrawer';
 import { ProductCard } from './components/ProductCard';
@@ -15,8 +14,10 @@ import { SearchModal } from './components/SearchModal';
 import { CheckoutPaymentModal } from './components/CheckoutPaymentModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { AuthModal } from './components/AuthModal';
-import { ArtisanCraftSection } from './components/ArtisanCraftSection';
-import { ReviewsSection } from './components/ReviewsSection';
+import { HomePage } from './components/HomePage';
+import { MarqueeStrip } from './components/MarqueeStrip';
+import { AnimatedHeadline } from './components/AnimatedHeadline';
+import { Reveal } from './components/Reveal';
 import { Footer } from './components/Footer';
 
 const STORAGE_KEY = 'clotex_state_v1';
@@ -38,8 +39,14 @@ function readPersisted(): Partial<PersistedState> {
   }
 }
 
+const pageFromHash = (): SitePage => (window.location.hash === '#clothing' ? 'clothing' : 'home');
+const pageHash = (page: SitePage) => (page === 'clothing' ? '#clothing' : '#home');
+
 export default function App() {
   const persisted = useMemo(readPersisted, []);
+
+  // Which half of the site the visitor is standing in
+  const [page, setPage] = useState<SitePage>(pageFromHash);
 
   // Currency State
   const [currency, setCurrency] = useState<Currency>(persisted.currency ?? 'USD');
@@ -136,6 +143,7 @@ export default function App() {
   // Sync category changes with filters & clean sub-filters
   const handleSelectCategory = (cat: string) => {
     setActiveCategory(cat);
+    goToPage('clothing');
     setFilters({
       category: cat,
       minPrice: 0,
@@ -154,6 +162,21 @@ export default function App() {
       }
     }, 50);
   };
+
+  const goToPage = (nextPage: SitePage) => {
+    setPage(nextPage);
+    const nextHash = pageHash(nextPage);
+    if (window.location.hash !== nextHash) {
+      window.history.pushState(null, '', nextHash);
+    }
+  };
+
+  // Keep the address bar and the browser buttons in sync with the visible page
+  useEffect(() => {
+    const onHashChange = () => setPage(pageFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   // Filtered & Sorted Products
   const displayedProducts = useMemo(() => {
@@ -411,6 +434,8 @@ export default function App() {
         cartCount={cartItems.reduce((acc, i) => acc + i.quantity, 0)}
         wishlistCount={wishlistIds.size}
         currentUser={currentUser}
+        page={page}
+        onSelectPage={goToPage}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
         onOpenSearch={() => setSearchModalOpen(true)}
@@ -421,84 +446,114 @@ export default function App() {
         activeCategory={activeCategory}
       />
 
-      {/* 3. Hero Campaign Section */}
-      <HeroSection
-        onShopClick={() => {
-          const el = document.getElementById('catalog-grid');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
-        onCraftClick={() => {
-          const el = document.getElementById('craft-story');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
-      />
+      {page === 'home' ? (
+        /* ============ HOME: the house, its craft, its cloth ============ */
+        <HomePage
+          onGoToClothing={() => goToPage('clothing')}
+          onSelectCategory={handleSelectCategory}
+        />
+      ) : (
+        /* ============ CLOTHING: the shop ============ */
+        <>
+          <MarqueeStrip />
 
-      {/* 4. Filter, Category Tabs & Sort */}
-      <CategoryNav
-        activeCategory={activeCategory}
-        onSelectCategory={handleSelectCategory}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        itemCount={displayedProducts.length}
-        onOpenFilters={() => setIsFilterDrawerOpen(true)}
-        activeFilterCount={activeFiltersCount}
-      />
-
-      {/* 5. Main Catalog Grid */}
-      <main id="catalog-grid" className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 w-full flex-1">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-[#EDE6DC] pb-4">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#7A6B5D] font-medium">
-              Curated Handcrafted Line · Jaipur Atelier
-            </p>
-            <h2 className="font-serif text-3xl font-normal text-[#1E1B18]">
-              {activeCategory}
-            </h2>
-          </div>
-          <p className="text-xs text-[#7A6B5D]">
-            Displaying <strong className="font-semibold text-[#1E1B18]">{displayedProducts.length}</strong> creations on neutral beige studio forms
-          </p>
-        </div>
-
-        {/* 3-Column Desktop Product Grid */}
-        {displayedProducts.length === 0 ? (
-          <div className="py-20 text-center space-y-3 bg-[#FAF7F2] border border-[#EDE6DC] p-8">
-            <p className="font-serif text-2xl text-[#1E1B18]">No Silhouettes Match Your Filters</p>
-            <p className="text-xs text-[#7A6B5D] max-w-sm mx-auto">
-              Try resetting your filter parameters or selecting a different collection department.
-            </p>
-            <button
-              onClick={() => handleSelectCategory('All Collections')}
-              className="px-6 py-2.5 bg-[#1E1B18] text-white text-xs uppercase tracking-wider font-medium hover:bg-[#342F2A]"
-            >
-              Reset All Filters
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {displayedProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                currency={currency}
-                isWishlisted={wishlistIds.has(product.id)}
-                onToggleWishlist={toggleWishlist}
-                onQuickView={(p) => setActiveProductModal(p)}
-                onQuickAdd={(p, sz, col) => {
-                  handleAddToCart(p, sz, col, 1);
-                  setIsCartOpen(true);
+          <section className="bg-[#F7F3ED] border-b border-[#EDE6DC] py-9 lg:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
+              <div className="space-y-2">
+                <p className="text-[11px] uppercase tracking-[0.25em] text-[#7A6B5D] font-medium">
+                  Handblocked In Bagru · Small Batches
+                </p>
+                <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1E1B18] leading-tight font-normal tracking-tight text-balance">
+                  <AnimatedHeadline
+                    text="The Clothing Room."
+                    startDelay={0}
+                    stepDelay={180}
+                    keyPrefix="clothing"
+                  />
+                </h1>
+                <p className="text-[#5C5349] text-sm leading-relaxed font-light max-w-xl">
+                  Apparel and home linen in five natural fabrics. Filter by cloth, size, colour or price and
+                  add straight to the bag.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  goToPage('home');
+                  setTimeout(() => {
+                    const el = document.getElementById('craft-story');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }, 60);
                 }}
-              />
-            ))}
-          </div>
-        )}
-      </main>
+                className="self-start sm:self-auto px-6 py-3 border border-[#3C352D] text-[11px] uppercase tracking-[0.2em] font-medium text-[#1E1B18] hover:bg-[#1E1B18] hover:text-[#FDFBF7] transition-colors whitespace-nowrap"
+              >
+                How We Make It
+              </button>
+            </div>
+          </section>
 
-      {/* 6. Artisan Craft Section */}
-      <ArtisanCraftSection />
+          {/* 4. Filter, Category Tabs & Sort */}
+          <CategoryNav
+            activeCategory={activeCategory}
+            onSelectCategory={handleSelectCategory}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            itemCount={displayedProducts.length}
+            onOpenFilters={() => setIsFilterDrawerOpen(true)}
+            activeFilterCount={activeFiltersCount}
+          />
 
-      {/* 7. Patron Reviews Section */}
-      <ReviewsSection />
+          {/* 5. Main Catalog Grid */}
+          <main id="catalog-grid" className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 w-full flex-1">
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-[#EDE6DC] pb-4">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.25em] text-[#7A6B5D] font-medium">
+                  Curated Handcrafted Line · Jaipur Atelier
+                </p>
+                <h2 className="font-serif text-3xl font-normal text-[#1E1B18]">
+                  {categoryLabel(activeCategory)}
+                </h2>
+              </div>
+              <p className="text-xs text-[#7A6B5D]">
+                Displaying <strong className="font-semibold text-[#1E1B18]">{displayedProducts.length}</strong> creations on neutral beige studio forms
+              </p>
+            </div>
+
+            {/* 3-Column Desktop Product Grid */}
+            {displayedProducts.length === 0 ? (
+              <div className="py-20 text-center space-y-3 bg-[#FAF7F2] border border-[#EDE6DC] p-8">
+                <p className="font-serif text-2xl text-[#1E1B18]">No Silhouettes Match Your Filters</p>
+                <p className="text-xs text-[#7A6B5D] max-w-sm mx-auto">
+                  Try resetting your filter parameters or selecting a different collection department.
+                </p>
+                <button
+                  onClick={() => handleSelectCategory('All Collections')}
+                  className="px-6 py-2.5 bg-[#1E1B18] text-white text-xs uppercase tracking-wider font-medium hover:bg-[#342F2A]"
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {displayedProducts.map((product, index) => (
+                  <Reveal key={product.id} variant="pop" delay={(index % 3) * 90} className="h-full [&>div]:h-full">
+                    <ProductCard
+                      product={product}
+                      currency={currency}
+                      isWishlisted={wishlistIds.has(product.id)}
+                      onToggleWishlist={toggleWishlist}
+                      onQuickView={(p) => setActiveProductModal(p)}
+                      onQuickAdd={(p, sz, col) => {
+                        handleAddToCart(p, sz, col, 1);
+                        setIsCartOpen(true);
+                      }}
+                    />
+                  </Reveal>
+                ))}
+              </div>
+            )}
+          </main>
+        </>
+      )}
 
       {/* 8. Footer */}
       <Footer

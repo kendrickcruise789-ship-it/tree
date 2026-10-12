@@ -96,3 +96,5 @@ export interface FilterOptions {
   inStockOnly: boolean;
   onSaleOnly: boolean;
 }
+
+export type SitePage = 'home' | 'clothing';
