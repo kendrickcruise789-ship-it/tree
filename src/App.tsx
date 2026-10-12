@@ -24,7 +24,7 @@ import { Footer } from './components/Footer';
 
 const STORAGE_KEY = 'clotex_state_v1';
 const USER_KEY = 'clotex_user';
-const KNOWN_COUPONS = new Set(['CLOTEX10', 'WELCOME15']);
+const KNOWN_COUPONS = new Set(['RAMBAGH10', 'WELCOME15']);
 const MAX_CART_LINES = 60;
 const MAX_QUANTITY_PER_LINE = 99;
 

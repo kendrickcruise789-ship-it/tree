@@ -52,7 +52,7 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({ isOpen, onClose 
         {/* Unit Selector */}
         <div className="my-6 flex items-center justify-between">
           <p className="text-xs text-[#7A6B5D]">
-            All Clotex silhouettes are designed with an easy, fluid drape. For a relaxed fit, choose your standard size.
+            All Rambagh silhouettes are designed with an easy, fluid drape. For a relaxed fit, choose your standard size.
           </p>
           <div className="flex items-center border border-[#D5C9B9] overflow-hidden text-xs">
             <button

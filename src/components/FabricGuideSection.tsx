@@ -70,7 +70,7 @@ export const FabricGuideSection: React.FC = () => {
             <AnimatedHeadline text="Five Cloths, Four Seasons." startDelay={0} stepDelay={150} keyPrefix="fabric" />
           </h2>
           <p className="text-[#5C5349] text-base leading-relaxed font-light">
-            Every Clotex piece names its fabric plainly. Tap through the five weaves we work with and see
+            Every Rambagh piece names its fabric plainly. Tap through the five weaves we work with and see
             exactly how each one behaves on the body and in the wash.
           </p>
         </Reveal>

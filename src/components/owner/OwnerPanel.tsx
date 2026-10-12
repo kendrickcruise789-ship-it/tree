@@ -224,7 +224,7 @@ export const OwnerPanel: React.FC<OwnerPanelProps> = ({
       <div className="max-w-4xl mx-auto">
         <Reveal>
           <header className="mb-8">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#C6934B]">Clotex</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-[#C6934B]">Rambagh</p>
             <h1 className="font-serif text-2xl sm:text-3xl text-[#1E1B18] mt-1">Shop owner panel</h1>
             <p className="text-sm text-[#5C5349] mt-2 max-w-prose">
               Edit prices, stock and pictures, and add or retire pieces here. Everything you save shows on the
@@ -657,7 +657,7 @@ const Guidance: React.FC = () => (
   <div className="border border-[#EDE6DC] bg-[#FBF8F2] p-6 space-y-2">
     <p className="font-serif text-lg text-[#1E1B18]">This copy of the site has no shop service behind it.</p>
     <p className="text-sm text-[#5C5349] max-w-prose">
-      Prices are edited on the hosted site, where the shop service is connected. Open Clotex there to manage this
+      Prices are edited on the hosted site, where the shop service is connected. Open Rambagh there to manage this
       shop from a browser tab that can reach it.
     </p>
   </div>

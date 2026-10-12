@@ -153,7 +153,7 @@ for (const port of PORTS) {
   const bound = await tryListen(port);
   if (bound) {
     const address = `http://localhost:${bound.port}`;
-    console.log(`\n  Clotex is running:  ${address}\n  Stop with Ctrl+C, or just close this window.\n`);
+    console.log(`\n  Rambagh is running:  ${address}\n  Stop with Ctrl+C, or just close this window.\n`);
     console.log(shop
       ? '  Shop data: this window holds it, so edits reset when you close it.\n'
       : '  Shop data: project files were not found beside the site, so this copy is display-only.\n');

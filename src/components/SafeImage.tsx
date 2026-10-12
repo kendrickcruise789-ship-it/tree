@@ -11,7 +11,7 @@ interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 
 export const SafeImage: React.FC<SafeImageProps> = ({
   src,
-  alt = 'Clotex artisanal product',
+  alt = 'Rambagh artisanal product',
   category,
   fallbackLabel,
   className = '',
@@ -25,7 +25,7 @@ export const SafeImage: React.FC<SafeImageProps> = ({
     : CATEGORY_FALLBACK_IMAGES.Dresses;
 
   const placeholder = useMemo(
-    () => getBeigePlaceholderSvg(fallbackLabel || category || 'CLOTEX'),
+    () => getBeigePlaceholderSvg(fallbackLabel || category || 'RAMBAGH'),
     [fallbackLabel, category]
   );
 

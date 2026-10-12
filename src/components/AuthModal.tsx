@@ -174,7 +174,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         {/* Modal Header */}
         <div className="text-center space-y-1 pb-4 border-b border-[#EDE6DC]">
           <span className="font-serif text-2xl tracking-[0.25em] font-medium text-[#1E1B18] uppercase block">
-            CLOTEX
+            RAMBAGH
           </span>
           <p className="text-xs uppercase tracking-wider text-[#7A6B5D]">
             {mode === 'signin' && 'Welcome Back to Slow Living'}
@@ -406,7 +406,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                 onChange={(e) => setNewsletter(e.target.checked)}
                 className="rounded mt-0.5 text-[#1E1B18] focus:ring-0"
               />
-              <span>Subscribe to Clotex Artisanal Newsletter (Receive 10% coupon code via email)</span>
+              <span>Subscribe to Rambagh Artisanal Newsletter (Receive 10% coupon code via email)</span>
             </label>
 
             <button

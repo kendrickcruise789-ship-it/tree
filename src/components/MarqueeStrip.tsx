@@ -27,7 +27,7 @@ export const MarqueeStrip: React.FC = () => {
   return (
     <div className="overflow-hidden bg-[#1E1B18] text-[#E8DDD1] py-3.5 border-b border-[#2D2924]">
       <p className="sr-only">
-        Clotex is hand-block printed in Bagru using natural fabrics, botanical dyes and fair artisan wages.
+        Rambagh is hand-block printed in Bagru using natural fabrics, botanical dyes and fair artisan wages.
       </p>
       <div className="clotex-marquee">
         {track(false)}

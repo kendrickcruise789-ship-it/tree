@@ -1,4 +1,4 @@
-// Clotex shop service. One place where the customer-facing catalogue is read and the
+// Rambagh shop service. One place where the customer-facing catalogue is read and the
 // only place the owner's edits are accepted: identity comes from the Gateway-injected
 // context, storage paths are derived here, and nothing about ownership is taken from
 // the browser.

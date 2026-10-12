@@ -34,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({
           
           <div className="lg:col-span-6 space-y-3">
             <span className="font-serif text-3xl tracking-[0.25em] font-medium text-white uppercase block">
-              CLOTEX
+              RAMBAGH
             </span>
             <p className="text-xs text-[#B8ACA0] max-w-md font-light leading-relaxed">
               Mindfully handcrafted women's slow fashion apparel. Designed in timeless silhouettes, printed by master Rajasthani block printers, and shipped worldwide with carbon-neutral courier partners.
@@ -52,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({
             {subscribed ? (
               <div className="p-3 bg-[#2D2924] border border-[#3E3831] text-xs text-[#E8DDD1] flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>Welcome! Use code <strong className="font-mono text-white">CLOTEX10</strong> at checkout for 10% off.</span>
+                <span>Welcome! Use code <strong className="font-mono text-white">RAMBAGH10</strong> at checkout for 10% off.</span>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="flex gap-2">
@@ -187,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#2D2924] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#7A6B5D]">
-          <p>© {new Date().getFullYear()} Clotex Clothing Ltd. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Rambagh Clothing Ltd. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span className="text-[#8D8275]">Privacy Charter</span>
             <span className="text-[#8D8275]">Terms of Service</span>
