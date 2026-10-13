@@ -1,6 +1,6 @@
 import React from 'react';
-import { FilterOptions, ProductCategory, Currency } from '../types';
-import { CATEGORIES, categoryLabel, ALL_FABRICS, ALL_SIZES, ALL_COLORS, MAX_PRICE_CEILING } from '../data/products';
+import { FilterOptions, Currency } from '../types';
+import { categoryLabel, ALL_FABRICS, ALL_SIZES, ALL_COLORS, MAX_PRICE_CEILING } from '../data/products';
 import { formatPrice } from '../utils/currency';
 import { X, RotateCcw, Check } from 'lucide-react';
 import { useOverlayBehavior } from '../utils/useOverlayBehavior';
@@ -11,6 +11,8 @@ interface FilterDrawerProps {
   currency: Currency;
   /** Top of the price slider. Defaults to the baked catalogue's most expensive piece. */
   priceCeiling?: number;
+  /** Categories the shop actually sells, so an owner-created one appears without a rebuild. */
+  categories: string[];
   onClose: () => void;
   onUpdateFilters: (newFilters: FilterOptions) => void;
   onResetFilters: () => void;
@@ -22,6 +24,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   filters,
   currency,
   priceCeiling = MAX_PRICE_CEILING,
+  categories,
   onClose,
   onUpdateFilters,
   onResetFilters,
@@ -120,7 +123,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
               Department / Category
             </h3>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((cat) => {
+              {categories.map((cat) => {
                 const isSelected = filters.category === cat;
                 return (
                   <button

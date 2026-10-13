@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 /**
- * Wires up the behaviour every Rambagh overlay is missing: Escape to dismiss,
+ * Wires up the behaviour every Ram Rass overlay is missing: Escape to dismiss,
  * background scroll locked while open, and initial focus into the panel.
  */
 export function useOverlayBehavior(

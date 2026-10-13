@@ -114,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           }}
           className="font-serif text-xl sm:text-2xl md:text-3xl tracking-[0.22em] sm:tracking-[0.3em] font-medium text-[#1E1B18] uppercase whitespace-nowrap shrink-0 hover:opacity-85 transition-opacity"
         >
-          RAMBAGH
+          RAM RASS
         </a>
 
         {/* Primary page switch: Home (the house) vs Clothing (the shop) */}

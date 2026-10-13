@@ -1,5 +1,5 @@
 /**
- * Fail-safe image cascade for Rambagh.
+ * Fail-safe image cascade for Ram Rass.
  * Guarantees that product photos, hero banners, and craft images
  * NEVER disappear, whether in production build, local dev, offline,
  * or deployed with custom base paths.
@@ -30,7 +30,7 @@ export const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
 };
 
 // Generates an inline SVG Data URI that requires zero network requests and looks exquisite
-export function getBeigePlaceholderSvg(label: string = 'RAMBAGH'): string {
+export function getBeigePlaceholderSvg(label: string = 'RAM RASS'): string {
   const safeLabel = label.replace(/[<>&"]/g, '');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" fill="none">
     <rect width="600" height="800" fill="#F4EFEA"/>
@@ -41,7 +41,7 @@ export function getBeigePlaceholderSvg(label: string = 'RAMBAGH'): string {
     <path d="M300 300 C310 330 330 345 330 360 C330 375 320 385 300 385 C280 385 270 375 270 360 C270 345 290 330 300 300 Z" fill="#C6934B" opacity="0.7"/>
     <circle cx="300" cy="360" r="14" fill="#A8523C"/>
     <!-- Brand Typography -->
-    <text x="300" y="470" text-anchor="middle" font-family="Georgia, serif" font-size="20" letter-spacing="6" fill="#1E1B18" font-weight="500">RAMBAGH</text>
+    <text x="300" y="470" text-anchor="middle" font-family="Georgia, serif" font-size="20" letter-spacing="6" fill="#1E1B18" font-weight="500">RAM RASS</text>
     <text x="300" y="500" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" letter-spacing="3" fill="#7A6B5D" font-weight="600" text-transform="uppercase">${safeLabel}</text>
     <text x="300" y="525" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#A89C8F">JAIPUR ARTISANAL ATELIER</text>
   </svg>`;

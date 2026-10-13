@@ -1,9 +1,11 @@
 import React from 'react';
-import { CATEGORIES, categoryLabel } from '../data/products';
+import { categoryLabel } from '../data/products';
 import { SlidersHorizontal, Filter } from 'lucide-react';
 
 interface CategoryNavProps {
   activeCategory: string;
+  /** Categories the shop actually sells, so an owner-created one appears without a rebuild. */
+  categories: string[];
   onSelectCategory: (category: string) => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
@@ -14,6 +16,7 @@ interface CategoryNavProps {
 
 export const CategoryNav: React.FC<CategoryNavProps> = ({
   activeCategory,
+  categories,
   onSelectCategory,
   sortBy,
   onSortChange,
@@ -27,7 +30,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
         
         {/* Category Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          {CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const isActive = activeCategory === cat;
             const isSale = cat === 'Sale';
             return (

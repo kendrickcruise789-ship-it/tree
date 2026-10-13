@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, Currency, ProductColor } from '../types';
 import { formatPrice } from '../utils/currency';
-import { resolveImage } from '../shop/schema';
+import { productImages, resolveImage } from '../shop/schema';
 import { SafeImage } from './SafeImage';
 import {
   X,
@@ -43,6 +43,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [addedNotice, setAddedNotice] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
 
   // Accordion states
   const [openSection, setOpenSection] = useState<'craft' | 'fabric' | 'care' | 'shipping' | null>('craft');
@@ -53,6 +54,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       setSelectedSize(product.sizes[0] || 'Standard');
       setSelectedColor(product.colors[0]);
       setQuantity(1);
+      setImageIndex(0);
     }
   }, [product?.id]);
 
@@ -62,6 +64,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   const activeSize = selectedSize || product.sizes[0] || 'Standard';
   const activeColor = selectedColor ?? product.colors[0];
+  const gallery = productImages(product);
+  const activeImage = gallery[Math.min(imageIndex, gallery.length - 1)] ?? product.image;
 
   const toggleSection = (section: 'craft' | 'fabric' | 'care' | 'shipping') => {
     setOpenSection(openSection === section ? null : section);
@@ -103,7 +107,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="md:col-span-6 space-y-4">
             <div className="relative aspect-[3/4] w-full bg-[#F4EFEA] overflow-hidden border border-[#EDE6DC]">
               <SafeImage
-                src={resolveImage(product.image)}
+                src={resolveImage(activeImage)}
                 alt={product.title}
                 category={product.category}
                 fallbackLabel={product.title}
@@ -121,6 +125,33 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 />
               </button>
             </div>
+
+            {gallery.length > 1 && (
+              <ul className="flex gap-2 overflow-x-auto no-scrollbar pb-1" aria-label="Product pictures">
+                {gallery.map((ref, index) => (
+                  <li key={`${ref}-${index}`}>
+                    <button
+                      type="button"
+                      onClick={() => setImageIndex(index)}
+                      aria-label={`Show picture ${index + 1} of ${gallery.length}`}
+                      aria-current={index === Math.min(imageIndex, gallery.length - 1)}
+                      className={`block w-16 aspect-[3/4] overflow-hidden border transition-colors ${
+                        index === Math.min(imageIndex, gallery.length - 1)
+                          ? 'border-[#C6934B] ring-1 ring-[#C6934B]/40'
+                          : 'border-[#EDE6DC] hover:border-[#C6934B]'
+                      }`}
+                    >
+                      <SafeImage
+                        src={resolveImage(ref)}
+                        alt=""
+                        category={product.category}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {/* Artisan authenticity badge under image */}
             <div className="p-3 bg-[#F7F3ED] border border-[#E8DDD1] flex items-center gap-3 text-xs text-[#5C5349]">

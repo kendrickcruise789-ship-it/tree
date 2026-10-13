@@ -123,7 +123,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
           </div>
         ) : (
           <p className="text-xs text-[#7A6B5D]">
-            All Rambagh shipments are insured and tracked end-to-end with real-time delivery notifications.
+            All Ram Rass shipments are insured and tracked end-to-end with real-time delivery notifications.
           </p>
         )}
 

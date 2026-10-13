@@ -75,7 +75,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <AnimatedHeadline text="A slow clothing house built around one printing table." startDelay={0} stepDelay={90} keyPrefix="house" />
             </h2>
             <p className="text-[#5C5349] text-sm sm:text-base leading-relaxed font-light">
-              Rambagh designs, blocks, dyes and stitches womenswear and home linen in the same Rajasthan
+              Ram Rass designs, blocks, dyes and stitches womenswear and home linen in the same Rajasthan
               workshops. We make small batches of cloth we can stand behind, sell them without a markup
               ladder, and tell you exactly who made each piece.
             </p>

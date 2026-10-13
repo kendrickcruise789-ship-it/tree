@@ -56,7 +56,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   // Coupon discount
   let discountUSD = 0;
-  if (appliedCoupon === 'RAMBAGH10') {
+  if (appliedCoupon === 'RAMRASS10') {
     discountUSD = rawSubtotalUSD * 0.1;
   } else if (appliedCoupon === 'WELCOME15') {
     discountUSD = rawSubtotalUSD * 0.15;
@@ -83,7 +83,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     if (success) {
       setCouponInput('');
     } else {
-      setCouponError('Invalid coupon code. Try RAMBAGH10');
+      setCouponError('Invalid coupon code. Try RAMRASS10');
     }
   };
 
@@ -275,7 +275,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="text"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="Enter Coupon (e.g. RAMBAGH10)"
+                    placeholder="Enter Coupon (e.g. RAMRASS10)"
                     className="flex-1 px-3 py-1.5 text-xs border border-[#D5C9B9] bg-white focus:outline-none uppercase"
                   />
                   <button

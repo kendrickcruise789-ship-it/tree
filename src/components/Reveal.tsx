@@ -17,7 +17,9 @@ export const Reveal: React.FC<RevealProps> = ({
   className = '',
   delay = 0,
   variant = 'up',
-  once = true,
+  // Reveals replay when a section scrolls back into view; a visitor who scrolls
+  // up should see the animation again rather than a static block.
+  once = false,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);

@@ -65,7 +65,7 @@ export const CarePromiseSection: React.FC = () => {
             </h2>
             <p className="text-[#5C5349] text-base leading-relaxed font-light">
               Hand-block cloth is not fragile — it just asks for a slightly slower routine. Four habits and a
-              Rambagh piece outlives the wardrobe it came from.
+              Ram Rass piece outlives the wardrobe it came from.
             </p>
           </Reveal>
 

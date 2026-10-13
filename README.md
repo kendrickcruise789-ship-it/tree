@@ -1,4 +1,4 @@
-# Rambagh
+# Ram Rass
 
 A storefront for a hand-block-printed apparel and home-textiles brand: 80 products across dresses,
 co-ords, kurtas, kaftans, bedsheets, home and gifts, with cart, wishlist, coupons, four currencies
@@ -15,7 +15,7 @@ through one same-origin endpoint.
 
 ## Quick start
 
-**No commands.** Install [Node.js](https://nodejs.org) once, then double-click **`Open Rambagh.bat`**.
+**No commands.** Install [Node.js](https://nodejs.org) once, then double-click **`Open Ram Rass.bat`**.
 It serves the built site in `dist/` at http://localhost:8080, opens the browser, and runs the shop
 handler in the same window so prices, stock and picture edits work locally. Those local edits live in
 memory and reset when the window closes — the published site keeps its own data.
@@ -95,7 +95,7 @@ the owner panel says so plainly instead of pretending to save.
 - **Money** — totals are computed from server-side catalogue prices (`CURRENCY_CONFIGS`: USD, INR, EUR,
   GBP). Free express shipping starts at a USD 120 subtotal (`FREE_SHIPPING_THRESHOLD_USD`), otherwise a
   flat courier fee applies; both the banner and the checkout copy derive from those constants.
-- **Coupons** — `RAMBAGH10` and `WELCOME15`, checked against that list rather than trusted from storage.
+- **Coupons** — `RAMRASS10` and `WELCOME15`, checked against that list rather than trusted from storage.
 - **Accessibility** — overlays respond to Escape, close on backdrop click, lock background scroll,
   expose `role="dialog"` / `aria-modal`, and move focus into the panel. Product actions are visible on
   touch devices rather than hover-only. The owner panel is keyboard-operable and announces save results.

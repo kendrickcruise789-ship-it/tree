@@ -59,6 +59,15 @@
   animation: clotex-word-in 0.72s cubic-bezier(0.22, 0.9, 0.28, 1) forwards;
 }
 
+/* AnimatedHeadline holds this class while its headline is out of view and drops
+   it on scroll-in, which restarts the wipe. The words stay readable while
+   pending: nobody is looking at them, and a headline whose observer never
+   fires (background tab, no IntersectionObserver) is never left hidden. */
+.clotex-words-pending .clotex-word {
+  animation: none;
+  opacity: 1;
+}
+
 /* Infinite scrolling marquee strip */
 @keyframes clotex-marquee {
   from { transform: translateX(0); }

@@ -21,13 +21,20 @@ export type ProductCategory =
   | 'Gifts'
   | 'Sale';
 
+export type ProductStatus = 'published' | 'draft';
+
+export const GST_RATES = [0, 5, 12, 18, 28] as const;
+
 export interface Product {
   id: string;
   title: string;
-  category: ProductCategory;
+  /** Free text: the owner can create a category from the admin panel. */
+  category: string;
   price: number; // in USD
   originalPrice?: number;
   image: string;
+  /** Photos in display order. `image` always mirrors the first entry. */
+  images?: string[];
   secondaryImage?: string;
   colors: ProductColor[];
   sizes: string[];
@@ -39,6 +46,11 @@ export interface Product {
   fitNote: string;
   rating: number;
   reviewsCount: number;
+  sku?: string;
+  hsnCode?: string;
+  gstPercent?: number;
+  weightGrams?: number;
+  status?: ProductStatus;
   isNewArrival?: boolean;
   isBestSeller?: boolean;
   onSale?: boolean;

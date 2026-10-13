@@ -1,4 +1,4 @@
-// Rambagh shop service. One place where the customer-facing catalogue is read and the
+// Ram Rass shop service. One place where the customer-facing catalogue is read and the
 // only place the owner's edits are accepted: identity comes from the Gateway-injected
 // context, storage paths are derived here, and nothing about ownership is taken from
 // the browser.
@@ -17,7 +17,6 @@ const BUNDLED_KEYS = [
   'mannequinDress', 'mannequinCoord', 'mannequinKurta', 'mannequinKaftan', 'bedsheet',
   'homeCushion', 'gifts', 'sale', 'tunicFlatlay', 'craftArtisan',
 ];
-const CATEGORIES = ['Dresses', 'Co-ords', 'Kurtas & Tunics', 'Kaftans', 'Bedsheets', 'Home', 'Gifts', 'Sale'];
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status,
@@ -104,6 +103,40 @@ function cleanStock(value, sizes) {
   return stock;
 }
 
+// A category is free text now, because the owner creates new ones from the admin panel.
+// It is still shape-checked: no angle brackets, quotes or backslashes can reach a document.
+function cleanCategory(value) {
+  const category = cleanText(value, 40);
+  if (!category || category.length < 2) return null;
+  if (/[<>"'`\\\/]/.test(category)) return null;
+  return category;
+}
+
+const MAX_IMAGES = 6;
+
+function cleanImages(value, primary) {
+  if (value === undefined || value === null) return [primary];
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_IMAGES) return null;
+  const refs = [];
+  for (const entry of value) {
+    const ref = cleanImageRef(entry);
+    if (!ref) return null;
+    refs.push(ref);
+  }
+  return refs;
+}
+
+const GST_RATES = [0, 5, 12, 18, 28];
+
+/** Optional field: blank or missing means "not set", anything present must validate. */
+function optionalNumber(value, { min, max, integer = false, allowed }) {
+  if (value === undefined || value === null || value === '') return undefined;
+  const n = numberWithin(value, { min, max, integer });
+  if (n === null) return null;
+  if (allowed && !allowed.includes(n)) return null;
+  return n;
+}
+
 // The server is the authority on what a product may contain: unknown keys are dropped
 // and any out-of-range value rejects the whole product rather than being clamped.
 function cleanProduct(value, { requireId }) {
@@ -124,6 +157,10 @@ function cleanProduct(value, { requireId }) {
   const price = numberWithin(raw.price, { min: 1, max: 100000 });
   if (!title || !description || !fabric || !craftTechnique || !careInstructions || !fitNote) return null;
   if (!image || !colors || !sizes || price === null) return null;
+  const category = cleanCategory(raw.category);
+  if (!category) return null;
+  const images = cleanImages(raw.images, image);
+  if (!images) return null;
   const stockPerSize = cleanStock(raw.stockPerSize, sizes);
   if (!stockPerSize) return null;
   const originalPrice = raw.originalPrice === undefined || raw.originalPrice === null || raw.originalPrice === ''
@@ -133,14 +170,26 @@ function cleanProduct(value, { requireId }) {
   const rating = numberWithin(raw.rating ?? 0, { min: 0, max: 5 });
   const reviewsCount = numberWithin(raw.reviewsCount ?? 0, { min: 0, max: 1000000, integer: true });
   if (rating === null || reviewsCount === null) return null;
-  if (!CATEGORIES.includes(raw.category)) return null;
+  const sku = raw.sku === undefined || raw.sku === null || raw.sku === '' ? undefined : cleanText(raw.sku, 64);
+  if (raw.sku && sku === null) return null;
+  const hsnCode = raw.hsnCode === undefined || raw.hsnCode === null || raw.hsnCode === ''
+    ? undefined
+    : cleanText(raw.hsnCode, 20);
+  if (raw.hsnCode && hsnCode === null) return null;
+  const gstPercent = optionalNumber(raw.gstPercent, { min: 0, max: 28, integer: true, allowed: GST_RATES });
+  if (gstPercent === null) return null;
+  const weightGrams = optionalNumber(raw.weightGrams, { min: 1, max: 5000, integer: true });
+  if (weightGrams === null) return null;
   return {
     id,
     title,
-    category: raw.category,
+    category,
     price,
     ...(originalPrice === undefined ? {} : { originalPrice }),
-    image,
+    // The primary picture is always the first gallery entry, so every existing surface
+    // that reads `image` keeps working after the gallery is reordered.
+    image: images[0],
+    images,
     colors,
     sizes,
     stockPerSize,
@@ -151,6 +200,11 @@ function cleanProduct(value, { requireId }) {
     fitNote,
     rating,
     reviewsCount,
+    ...(sku === undefined ? {} : { sku }),
+    ...(hsnCode === undefined ? {} : { hsnCode }),
+    ...(gstPercent === undefined ? {} : { gstPercent }),
+    ...(weightGrams === undefined ? {} : { weightGrams }),
+    status: raw.status === 'draft' ? 'draft' : 'published',
     isNewArrival: boolFlag(raw.isNewArrival),
     isBestSeller: boolFlag(raw.isBestSeller),
     onSale: boolFlag(raw.onSale),

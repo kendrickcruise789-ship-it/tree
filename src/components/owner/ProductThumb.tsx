@@ -4,14 +4,14 @@ import { ImageOff } from 'lucide-react';
 
 interface ProductThumbProps {
   /** A stored image reference (`bundled:…`, `shop:…`, https URL) — resolved internally. */
-  ref: string | undefined;
+  imageRef: string | undefined;
   alt?: string;
   className?: string;
 }
 
 /** Renders a catalogue thumbnail, falling back to a neutral block when the reference resolves to nothing. */
-export const ProductThumb: React.FC<ProductThumbProps> = ({ ref, alt = '', className = 'w-16 h-20' }) => {
-  const src = resolveImage(ref);
+export const ProductThumb: React.FC<ProductThumbProps> = ({ imageRef, alt = '', className = 'w-16 h-20' }) => {
+  const src = resolveImage(imageRef);
   if (!src) {
     return (
       <span

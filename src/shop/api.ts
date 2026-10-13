@@ -1,6 +1,6 @@
-import { Product, ProductCategory, ProductColor, Currency } from '../types';
+import { Currency, GST_RATES, Product, ProductColor } from '../types';
 import { PRODUCTS, ALL_COLORS } from '../data/products';
-import { CatalogueDocument, SessionState, EDITABLE_CATEGORIES, asImageRef } from './schema';
+import { CatalogueDocument, SessionState, asImageRef, isUsableImage } from './schema';
 import { ApiError, requestJson } from './request';
 
 const ENDPOINT = '/functions/v1/app';
@@ -73,14 +73,22 @@ export function parseProduct(value: unknown): Product | null {
   const sizes = Array.isArray(raw.sizes)
     ? raw.sizes.slice(0, 12).map((s) => text(s, '', 24)).filter(Boolean)
     : ['Standard'];
-  const category = EDITABLE_CATEGORIES.includes(raw.category as ProductCategory)
-    ? (raw.category as ProductCategory)
-    : 'Dresses';
+  // A category the owner created must survive a round trip, so this is free text and not
+  // the built-in union — falling back to 'Dresses' would silently re-file their products.
+  const category = text(raw.category, 'Dresses', 40);
   const price = Math.round(num(raw.price, 0, 1, 100000) * 100) / 100;
   const originalPrice = raw.originalPrice === undefined || raw.originalPrice === null || raw.originalPrice === ''
     ? undefined
     : Math.round(num(raw.originalPrice, price, 1, 100000) * 100) / 100;
   const image = text(raw.image, 'bundled:mannequinDress', 512);
+  const images = Array.isArray(raw.images)
+    ? raw.images.slice(0, 6).map((ref) => asImageRef(text(ref, '', 512))).filter((ref) => isUsableImage(ref))
+    : [];
+  // A missing GST rate stays missing: 0% is a real tax slab, not "unknown".
+  const gst = raw.gstPercent === undefined || raw.gstPercent === null || raw.gstPercent === ''
+    ? undefined
+    : Math.round(num(raw.gstPercent, 0, 0, 28));
+  const status = raw.status === 'draft' ? 'draft' : 'published';
   return {
     id,
     title: text(raw.title, 'Untitled piece', 140),
@@ -88,6 +96,7 @@ export function parseProduct(value: unknown): Product | null {
     price,
     originalPrice,
     image: asImageRef(image),
+    images: images.length ? images : [asImageRef(image)],
     colors: parseColors(raw.colors),
     sizes,
     stockPerSize: parseStock(raw.stockPerSize, sizes),
@@ -98,6 +107,13 @@ export function parseProduct(value: unknown): Product | null {
     fitNote: text(raw.fitNote, '', 300),
     rating: num(raw.rating, 0, 0, 5),
     reviewsCount: Math.round(num(raw.reviewsCount, 0, 0, 1000000)),
+    sku: raw.sku === undefined || raw.sku === null ? undefined : text(raw.sku, '', 64) || undefined,
+    hsnCode: raw.hsnCode === undefined || raw.hsnCode === null ? undefined : text(raw.hsnCode, '', 20) || undefined,
+    gstPercent: gst !== undefined && GST_RATES.includes(gst as (typeof GST_RATES)[number]) ? gst : undefined,
+    weightGrams: raw.weightGrams === undefined || raw.weightGrams === null
+      ? undefined
+      : Math.round(num(raw.weightGrams, 0, 0, 5000)) || undefined,
+    status,
     isNewArrival: flag(raw.isNewArrival),
     isBestSeller: flag(raw.isBestSeller),
     onSale: flag(raw.onSale),

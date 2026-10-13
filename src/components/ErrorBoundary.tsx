@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Rambagh Application Error Caught:', error, errorInfo);
+    console.error('Ram Rass Application Error Caught:', error, errorInfo);
   }
 
   private handleReset = () => {
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <div className="space-y-2">
               <span className="font-serif text-2xl tracking-[0.2em] font-medium text-[#1E1B18] uppercase block">
-                RAMBAGH
+                RAM RASS
               </span>
               <h1 className="font-serif text-xl font-normal text-[#1E1B18]">
                 Something interrupted your session
@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
               className="w-full py-3 bg-[#1E1B18] text-[#FDFBF7] text-xs uppercase tracking-widest font-medium hover:bg-[#342F2A] transition-colors flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reload Rambagh Atelier</span>
+              <span>Reload Ram Rass Atelier</span>
             </button>
           </div>
         </div>

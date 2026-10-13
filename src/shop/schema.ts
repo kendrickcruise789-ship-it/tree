@@ -83,6 +83,26 @@ export const EDITABLE_CATEGORIES = CATEGORIES.filter(
   (cat): cat is ProductCategory => cat !== 'All Collections',
 );
 
+/**
+ * Categories the shop actually sells. The built-in list keeps its order and labels;
+ * anything the owner invented in the admin panel is appended alphabetically, because a
+ * customer must be able to reach a new category without a code change.
+ */
+export function categoryOptions(products: Product[]): string[] {
+  const extra = products
+    .map((product) => product.category)
+    .filter((cat) => !EDITABLE_CATEGORIES.includes(cat as ProductCategory))
+    .filter((cat) => cat !== 'All Collections');
+  return [...EDITABLE_CATEGORIES, ...Array.from(new Set(extra)).sort()];
+}
+
+/** Photos of a product in display order, for catalogue rows written before galleries existed. */
+export function productImages(product: Product): string[] {
+  const list = (product.images ?? []).filter((ref) => isUsableImage(ref));
+  if (list.length) return list;
+  return [product.image];
+}
+
 export const EDITABLE_PRODUCT_FIELDS = [
   'id',
   'title',
@@ -90,6 +110,7 @@ export const EDITABLE_PRODUCT_FIELDS = [
   'price',
   'originalPrice',
   'image',
+  'images',
   'colors',
   'sizes',
   'stockPerSize',
@@ -100,6 +121,11 @@ export const EDITABLE_PRODUCT_FIELDS = [
   'fitNote',
   'rating',
   'reviewsCount',
+  'sku',
+  'hsnCode',
+  'gstPercent',
+  'weightGrams',
+  'status',
   'isNewArrival',
   'isBestSeller',
   'onSale',
@@ -109,7 +135,7 @@ export function totalStock(product: Product): number {
   return Object.values(product.stockPerSize).reduce((sum, n) => sum + (Number.isFinite(n) ? n : 0), 0);
 }
 
-/** A draft for a brand new product, deliberately starting with no stock. */
+/** A draft for a brand new product, deliberately starting with no stock and hidden from shoppers. */
 export function blankProduct(id: string): Product {
   return {
     id,
@@ -117,15 +143,17 @@ export function blankProduct(id: string): Product {
     category: 'Dresses',
     price: 100,
     image: 'bundled:mannequinDress',
+    images: ['bundled:mannequinDress'],
     colors: [{ name: 'Parchment Ivory', hex: '#EDE8DF' }] satisfies ProductColor[],
     sizes: ['S', 'M', 'L'],
     stockPerSize: { S: 0, M: 0, L: 0 },
-    description: 'Add a short description of the cut, the cloth and how it wears.',
+    description: 'Describe the cut, the cloth and how it wears.',
     fabric: ALL_FABRICS[0],
-    craftTechnique: 'Hand block printed in Bagru.',
-    careInstructions: 'Gentle hand wash in cold water. Shade dry.',
-    fitNote: 'Relaxed fit.',
+    craftTechnique: 'Add how this piece is made.',
+    careInstructions: 'Add washing and drying instructions.',
+    fitNote: 'Add fit advice, e.g. runs one size large.',
     rating: 0,
     reviewsCount: 0,
+    status: 'draft',
   };
 }

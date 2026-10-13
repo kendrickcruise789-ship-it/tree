@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { Product, CartItem, Currency, ProductColor, OrderConfirmationData, UserAccount, FilterOptions, SitePage } from './types';
 import { MAX_PRICE_CEILING, categoryLabel } from './data/products';
 import { loadCatalogue, bundledCatalogue, CURRENCY_CODES, type CatalogueSource } from './shop/api';
+import { categoryOptions } from './shop/schema';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
 import { CategoryNav } from './components/CategoryNav';
@@ -24,7 +25,7 @@ import { Footer } from './components/Footer';
 
 const STORAGE_KEY = 'clotex_state_v1';
 const USER_KEY = 'clotex_user';
-const KNOWN_COUPONS = new Set(['RAMBAGH10', 'WELCOME15']);
+const KNOWN_COUPONS = new Set(['RAMRASS10', 'WELCOME15']);
 const MAX_CART_LINES = 60;
 const MAX_QUANTITY_PER_LINE = 99;
 
@@ -174,6 +175,9 @@ export default function App() {
   const [revision, setRevision] = useState(0);
   const [catalogueSource, setCatalogueSource] = useState<CatalogueSource>('bundled');
 
+  // Drafts are the owner's workbench. Only published pieces reach a shopper's screen.
+  const shopCatalogue = useMemo(() => catalogue.filter((product) => product.status !== 'draft'), [catalogue]);
+
   // Currency State
   const [currency, setCurrency] = useState<Currency>(persisted.currency);
 
@@ -185,11 +189,17 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState<string>('All Collections');
   const [sortBy, setSortBy] = useState<string>('featured');
 
+  // A category the owner creates in the admin panel is instantly a tab and a filter option.
+  const shopCategories = useMemo(
+    () => ['All Collections', ...categoryOptions(shopCatalogue)],
+    [shopCatalogue],
+  );
+
   // Filters State — the price range follows the shop's own most expensive piece
   const priceCeiling = useMemo(() => {
-    const highest = catalogue.reduce((max, p) => Math.max(max, p.price), 0);
+    const highest = shopCatalogue.reduce((max, p) => Math.max(max, p.price), 0);
     return Math.max(MAX_PRICE_CEILING, Math.ceil(highest / 5) * 5);
-  }, [catalogue]);
+  }, [shopCatalogue]);
 
   const initialFilters: FilterOptions = {
     category: 'All Collections',
@@ -223,7 +233,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [appliedCoupon, setAppliedCoupon] = useState<string>(persisted.appliedCoupon);
   const [giftWrap, setGiftWrap] = useState<boolean>(persisted.giftWrap);
-  const cartItems = useMemo(() => rehydrateCart(cartLines, catalogue), [cartLines, catalogue]);
+  const cartItems = useMemo(() => rehydrateCart(cartLines, shopCatalogue), [cartLines, shopCatalogue]);
 
   // Wishlist State
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(
@@ -362,7 +372,7 @@ export default function App() {
 
   // Filtered & Sorted Products
   const displayedProducts = useMemo(() => {
-    let list = [...catalogue];
+    let list = [...shopCatalogue];
 
     // 1. Category Filter: check selected category
     const targetCat = activeCategory !== 'All Collections' ? activeCategory : filters.category;
@@ -423,7 +433,7 @@ export default function App() {
     }
 
     return list;
-  }, [catalogue, activeCategory, filters, sortBy]);
+  }, [shopCatalogue, activeCategory, filters, sortBy]);
 
   // Active filters count
   const activeFiltersCount = useMemo(() => {
@@ -489,8 +499,8 @@ export default function App() {
   };
 
   const wishlistProducts = useMemo(() => {
-    return catalogue.filter((p) => wishlistIds.has(p.id));
-  }, [catalogue, wishlistIds]);
+    return shopCatalogue.filter((p) => wishlistIds.has(p.id));
+  }, [shopCatalogue, wishlistIds]);
 
   // Cart Actions
   const stockFor = (product: Product, size: string) => product.stockPerSize[size] ?? 0;
@@ -676,7 +686,7 @@ export default function App() {
         <HomePage
           onGoToClothing={() => goToPage('clothing')}
           onSelectCategory={handleSelectCategory}
-          products={catalogue}
+          products={shopCatalogue}
           currency={currency}
           onViewProduct={(product) => setActiveProductModal(product)}
         />
@@ -722,6 +732,7 @@ export default function App() {
           {/* 4. Filter, Category Tabs & Sort */}
           <CategoryNav
             activeCategory={activeCategory}
+            categories={shopCategories}
             onSelectCategory={handleSelectCategory}
             sortBy={sortBy}
             onSortChange={setSortBy}
@@ -799,6 +810,7 @@ export default function App() {
         filters={filters}
         currency={currency}
         priceCeiling={priceCeiling}
+        categories={shopCategories}
         onClose={() => setIsFilterDrawerOpen(false)}
         onUpdateFilters={(newFilters) => {
           setFilters(newFilters);
@@ -849,7 +861,7 @@ export default function App() {
       {/* Search Dialog */}
       <SearchModal
         isOpen={searchModalOpen}
-        products={catalogue}
+        products={shopCatalogue}
         currency={currency}
         onClose={() => setSearchModalOpen(false)}
         onSelectProduct={(p) => setActiveProductModal(p)}

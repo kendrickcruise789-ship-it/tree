@@ -21,7 +21,7 @@ export const ArtisanCraftSection: React.FC = () => {
             The Rhythm of the Wooden Block
           </h2>
           <p className="text-[#5C5349] text-base leading-relaxed font-light">
-            Every garment from Rambagh begins not in a factory line, but on long wooden print tables where master artisans align hand-carved teak wood stamps to pure organic cotton.
+            Every garment from Ram Rass begins not in a factory line, but on long wooden print tables where master artisans align hand-carved teak wood stamps to pure organic cotton.
           </p>
         </Reveal>
 
@@ -96,7 +96,7 @@ export const ArtisanCraftSection: React.FC = () => {
 
             {/* Bottom Proof Quote */}
             <Reveal variant="fade" delay={200} className="p-4 bg-white/70 border border-[#EDE6DC] text-xs text-[#5C5349] italic">
-              "When you wear Rambagh, you wear the patient breath and steady hand of an artist whose lineage stretches back four hundred years."
+              "When you wear Ram Rass, you wear the patient breath and steady hand of an artist whose lineage stretches back four hundred years."
             </Reveal>
 
           </div>

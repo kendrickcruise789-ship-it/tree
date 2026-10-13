@@ -81,6 +81,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const port = Number(process.argv[2] ?? 8000);
   const { server } = createShopDevServer(port);
   server.listen(port, '127.0.0.1', () => {
-    console.log(`Rambagh shop service (local fake) on http://127.0.0.1:${port}/functions/v1/app?action=catalogue`);
+    console.log(`Ram Rass shop service (local fake) on http://127.0.0.1:${port}/functions/v1/app?action=catalogue`);
   });
 }

@@ -7,7 +7,7 @@ import {
   resetCatalogueToBundled,
 } from '../../shop/api';
 import type { SessionState } from '../../shop/schema';
-import { EDITABLE_CATEGORIES, blankProduct, totalStock } from '../../shop/schema';
+import { blankProduct, categoryOptions, totalStock } from '../../shop/schema';
 import { categoryLabel } from '../../data/products';
 import { formatPrice } from '../../utils/currency';
 import { Reveal } from '../Reveal';
@@ -99,6 +99,8 @@ export const OwnerPanel: React.FC<OwnerPanelProps> = ({
 
   const session = phase.phase === 'ready' ? phase.session : null;
   const isOwner = session?.status === 'owner';
+
+  const categories = useMemo(() => categoryOptions(products), [products]);
 
   const visible = useMemo(() => {
     if (!isOwner || !session || session.status !== 'owner') return [];
@@ -224,7 +226,7 @@ export const OwnerPanel: React.FC<OwnerPanelProps> = ({
       <div className="max-w-4xl mx-auto">
         <Reveal>
           <header className="mb-8">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#C6934B]">Rambagh</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-[#C6934B]">Ram Rass</p>
             <h1 className="font-serif text-2xl sm:text-3xl text-[#1E1B18] mt-1">Shop owner panel</h1>
             <p className="text-sm text-[#5C5349] mt-2 max-w-prose">
               Edit prices, stock and pictures, and add or retire pieces here. Everything you save shows on the
@@ -296,6 +298,7 @@ export const OwnerPanel: React.FC<OwnerPanelProps> = ({
                   search={search}
                   onSearch={setSearch}
                   category={category}
+                  categories={categories}
                   onCategory={setCategory}
                   onAdd={startCreate}
                   restoring={restoring}
@@ -328,6 +331,7 @@ export const OwnerPanel: React.FC<OwnerPanelProps> = ({
                       base={createDraft}
                       mode="create"
                       currency={currency}
+                      categories={categories}
                       saving={busyId === createDraft.id}
                       error={rowError}
                       unknownOutcome={unknownOutcome}
@@ -367,6 +371,7 @@ export const OwnerPanel: React.FC<OwnerPanelProps> = ({
                                   base={product}
                                   mode="edit"
                                   currency={currency}
+                                  categories={categories}
                                   saving={busyId === product.id}
                                   error={rowError}
                                   unknownOutcome={unknownOutcome}
@@ -421,6 +426,7 @@ interface ToolbarProps {
   search: string;
   onSearch: (value: string) => void;
   category: string;
+  categories: string[];
   onCategory: (value: string) => void;
   onAdd: () => void;
   restoring: boolean;
@@ -434,6 +440,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   search,
   onSearch,
   category,
+  categories,
   onCategory,
   onAdd,
   restoring,
@@ -472,7 +479,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         className="bg-[#FDFBF7] border border-[#EDE6DC] px-3 py-2.5 text-sm text-[#1E1B18] focus:outline-none focus:border-[#C6934B] focus:ring-1 focus:ring-[#C6934B]/40"
       >
         <option value={ALL_FILTER}>All categories</option>
-        {EDITABLE_CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <option key={cat} value={cat}>
             {categoryLabel(cat)}
           </option>
@@ -555,7 +562,7 @@ const Row: React.FC<RowProps> = ({ product, currency, open, saved, needsAttentio
   >
     {/* Desktop: single inline row */}
     <span className="hidden md:flex md:items-center md:flex-1 md:min-w-0 md:gap-3">
-      <ProductThumb ref={product.image} alt={product.title} className="w-12 h-14" />
+      <ProductThumb imageRef={product.image} alt={product.title} className="w-12 h-14" />
       <span className="min-w-0">
         <span className="block truncate text-sm text-[#1E1B18]">{product.title}</span>
         <span className="block truncate text-[11px] text-[#5C5349] break-all">{product.id}</span>
@@ -577,7 +584,7 @@ const Row: React.FC<RowProps> = ({ product, currency, open, saved, needsAttentio
     {/* Mobile: stacked, never overflows the viewport */}
     <span className="md:hidden flex-1 min-w-0 space-y-2">
       <span className="flex items-start gap-3">
-        <ProductThumb ref={product.image} alt={product.title} className="w-12 h-14" />
+        <ProductThumb imageRef={product.image} alt={product.title} className="w-12 h-14" />
         <span className="min-w-0 flex-1">
           <span className="block text-sm text-[#1E1B18] leading-snug">{product.title}</span>
           <span className="block text-[11px] text-[#5C5349] break-all">{product.id}</span>
@@ -602,6 +609,7 @@ const Row: React.FC<RowProps> = ({ product, currency, open, saved, needsAttentio
 
 const Markers: React.FC<{ product: Product; saved: boolean }> = ({ product, saved }) => (
   <>
+    {product.status === 'draft' && <Tag text="Draft" tone="danger" />}
     {saved && <Tag text="Saved" tone="gold" />}
     {product.isNewArrival && <Tag text="New" tone="ink" />}
     {product.isBestSeller && <Tag text="Bestseller" tone="muted" />}
@@ -657,7 +665,7 @@ const Guidance: React.FC = () => (
   <div className="border border-[#EDE6DC] bg-[#FBF8F2] p-6 space-y-2">
     <p className="font-serif text-lg text-[#1E1B18]">This copy of the site has no shop service behind it.</p>
     <p className="text-sm text-[#5C5349] max-w-prose">
-      Prices are edited on the hosted site, where the shop service is connected. Open Rambagh there to manage this
+      Prices are edited on the hosted site, where the shop service is connected. Open Ram Rass there to manage this
       shop from a browser tab that can reach it.
     </p>
   </div>

@@ -7,27 +7,30 @@ interface CountUpProps {
   className?: string;
 }
 
-/** Counts from zero to `to` the first time it scrolls into view. */
+/** Counts from zero to `to` every time it scrolls into view. */
 export const CountUp: React.FC<CountUpProps> = ({ to, duration = 1300, suffix = '', className = '' }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const [value, setValue] = useState(0);
-  const startedRef = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
+
+    const prefersReducedMotion = () =>
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (typeof IntersectionObserver === 'undefined' || prefersReducedMotion()) {
       setValue(to);
       return;
     }
 
     let frame = 0;
     const run = () => {
-      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) {
+      if (prefersReducedMotion()) {
         setValue(to);
         return;
       }
+      cancelAnimationFrame(frame);
       const start = performance.now();
       const tick = (now: number) => {
         const progress = Math.min(1, (now - start) / duration);
@@ -41,10 +44,12 @@ export const CountUp: React.FC<CountUpProps> = ({ to, duration = 1300, suffix = 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !startedRef.current) {
-            startedRef.current = true;
+          if (entry.isIntersecting) {
             run();
-            observer.unobserve(entry.target);
+          } else {
+            // Back to zero so the next scroll-in counts up again.
+            cancelAnimationFrame(frame);
+            setValue(0);
           }
         });
       },
@@ -53,7 +58,7 @@ export const CountUp: React.FC<CountUpProps> = ({ to, duration = 1300, suffix = 
     observer.observe(el);
     return () => {
       observer.disconnect();
-      if (frame) cancelAnimationFrame(frame);
+      cancelAnimationFrame(frame);
     };
   }, [to, duration]);
 

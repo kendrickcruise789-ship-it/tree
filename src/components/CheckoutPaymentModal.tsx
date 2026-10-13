@@ -113,7 +113,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
   );
   const giftWrapCostUSD = giftWrap ? 5 : 0;
   let discountUSD = 0;
-  if (appliedCoupon === 'RAMBAGH10') discountUSD = rawSubtotalUSD * 0.1;
+  if (appliedCoupon === 'RAMRASS10') discountUSD = rawSubtotalUSD * 0.1;
   if (appliedCoupon === 'WELCOME15') discountUSD = rawSubtotalUSD * 0.15;
   const isFreeShipping = rawSubtotalUSD >= FREE_SHIPPING_THRESHOLD_USD;
   const shippingUSD =
@@ -265,7 +265,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#EDE6DC] flex items-center justify-between bg-white sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <span className="font-serif text-xl tracking-[0.2em] font-medium text-[#1E1B18]">RAMBAGH</span>
+            <span className="font-serif text-xl tracking-[0.2em] font-medium text-[#1E1B18]">RAM RASS</span>
             <span className="text-[#C5BDB3]">|</span>
             <span className="text-xs uppercase tracking-wider text-[#7A6B5D] font-medium flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-[#2F6F4E]" />
@@ -726,7 +726,7 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
                               ))}
                             </div>
                             <span className="text-[9px] uppercase font-bold tracking-widest text-[#1E1B18] bg-white px-1 absolute">
-                              RAMBAGH UPI
+                              RAM RASS UPI
                             </span>
                           </div>
                           <p className="text-[11px] text-center text-[#7A6B5D]">

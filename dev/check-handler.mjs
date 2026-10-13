@@ -16,8 +16,8 @@ const results = [];
 async function check(name, expectation, run) {
   try {
     const actual = await run();
-    const ok = expectation(actual);
-    results.push({ name, ok, actual });
+    const ok = await expectation(actual);
+    results.push({ name, ok: ok === true, actual });
   } catch (error) {
     results.push({ name, ok: false, actual: `threw ${error?.message ?? error}` });
   }
@@ -95,7 +95,8 @@ await check('out-of-range price is refused', (s) => s === 400, async () => statu
 await check('non-integer stock is refused', (s) => s === 400, async () => status(await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ stockPerSize: { S: 1.5, M: 2 } }) } })));
 await check('image pointing at another host is refused', (s) => s === 400, async () => status(await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ image: 'http://evil.example/a.jpg' }) } })));
 await check('javascript: image is refused', (s) => s === 400, async () => status(await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ image: 'javascript:alert(1)' }) } })));
-await check('unknown category is refused', (s) => s === 400, async () => status(await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ category: 'Weapons' }) } })));
+await check('category with markup or a path is refused', (s) => s === 400, async () => status(await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ category: 'Weapons/<x>' }) } })));
+await check('one-letter category is refused', (s) => s === 400, async () => status(await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ category: 'W' }) } })));
 await check('unknown extra field is dropped, not stored', (s) => s.price === 138 && s.adminNote === undefined, async () => {
   await call('product.save', { method: 'POST', body: { baseRevision: 1, product: validProduct({ adminNote: 'leak' }) } });
   const doc = await (await call('catalogue', { user: null })).json();
@@ -129,6 +130,39 @@ await check('retire removes the product', (s) => s.ok === true && s.products.len
   return doc;
 });
 await check('retiring a missing product is not a success', (s) => s === 404, async () => status(await call('product.retire', { method: 'POST', body: { baseRevision: 4, id: 'nope' } })));
+
+// Full product management: a category the owner invented, a gallery of the owner's own
+// photos, draft visibility and Indian compliance fields must all survive a round trip.
+const first = async () => (await (await call('catalogue', { user: null })).json()).products[0];
+
+await check('owner-created category is accepted', async (doc) => doc.ok === true && doc.products[0].category === 'Sarees', async () => {
+  const created = await call('product.create', { method: 'POST', body: { baseRevision: 4, product: validProduct({ id: 'sa-001', category: 'Sarees' }) } });
+  return await created.json();
+});
+await check('gallery keeps its order and mirrors the first photo into image', async (product) =>
+  product.image === 'bundled:mannequinDress'
+  && product.images.length === 2
+  && product.images[0] === 'bundled:mannequinDress'
+  && product.images[1] === uploadedRef, async () => {
+  await call('product.save', { method: 'POST', body: { baseRevision: 5, product: validProduct({ id: 'sa-001', category: 'Sarees', images: ['bundled:mannequinDress', uploadedRef] }) } });
+  return await first();
+});
+await check('bad photo inside a gallery rejects the whole product', (s) => s === 400, async () =>
+  status(await call('product.save', { method: 'POST', body: { baseRevision: 6, product: validProduct({ id: 'sa-001', images: ['bundled:mannequinDress', 'http://evil.example/a.jpg'] }) } })));
+await check('gallery longer than six photos is refused', (s) => s === 400, async () =>
+  status(await call('product.save', { method: 'POST', body: { baseRevision: 6, product: validProduct({ id: 'sa-001', images: Array.from({ length: 7 }, () => 'bundled:mannequinDress') }) } })));
+await check('gst rate outside the slabs is refused', (s) => s === 400, async () =>
+  status(await call('product.save', { method: 'POST', body: { baseRevision: 6, product: validProduct({ id: 'sa-001', gstPercent: 7 }) } })));
+await check('owner can add sizes the code never knew about', async (product) =>
+  product.sizes.includes('XXXL') && product.stockPerSize.XXXL === 3, async () => {
+  await call('product.save', { method: 'POST', body: { baseRevision: 6, product: validProduct({ id: 'sa-001', sizes: ['S', 'XXXL'], stockPerSize: { S: 4, XXXL: 3 } }) } });
+  return await first();
+});
+await check('draft status and compliance fields round trip', async (product) =>
+  product.status === 'draft' && product.sku === 'RB-SA-001' && product.hsnCode === '6204' && product.gstPercent === 12 && product.weightGrams === 350, async () => {
+  await call('product.save', { method: 'POST', body: { baseRevision: 7, product: validProduct({ id: 'sa-001', status: 'draft', sku: 'RB-SA-001', hsnCode: '6204', gstPercent: 12, weightGrams: 350 }) } });
+  return await first();
+});
 
 const failed = results.filter((r) => !r.ok);
 for (const r of results) {

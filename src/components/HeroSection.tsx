@@ -37,7 +37,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             <Reveal delay={760} className="space-y-5">
               <p className="text-[#5C5349] text-base sm:text-lg leading-relaxed font-light">
-                Rooted in the timeless art of wooden hand-block printing and breathable natural mulmul. Rambagh brings unhurried, mindful artisanal silhouettes for the contemporary woman.
+                Rooted in the timeless art of wooden hand-block printing and breathable natural mulmul. Ram Rass brings unhurried, mindful artisanal silhouettes for the contemporary woman.
               </p>
 
               {/* Micro value props - clean unboxed typography */}
@@ -76,7 +76,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <div ref={imageRef} className="absolute inset-x-0 -inset-y-[8%]">
                   <SafeImage
                     src={HERO_IMAGE}
-                    alt="Rambagh Solstice Collection hand block-printed tiered maxi dress"
+                    alt="Ram Rass Solstice Collection hand block-printed tiered maxi dress"
                     category="Dresses"
                     fallbackLabel="Solstice Collection"
                     className="w-full h-full object-cover object-center scale-[1.06]"
