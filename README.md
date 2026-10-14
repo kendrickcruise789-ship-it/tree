@@ -126,8 +126,10 @@ panel authorises anything), and the storefront has no real payment provider.
 
 This project publishes as a Qoder Sites capability site: `dist/` for the static files and `functions/`
 for the `app` Edge Function, prepared and published through the Qoder Sites tooling. The live shop is
-at `https://clotex-shop-hqvgicd48zq.qoder.website`; it currently requires a Qoder sign-in (private
-access), so visitors need access enabled before they can order.
+at `https://clotex-shop-hqvgicd48zq.qoder.website` and is publicly readable. The owner panel at
+`/#owner` is reachable by any visitor too, but it is unclaimed until an account presses "Claim this
+shop" — the first one becomes the owner and every other account is refused by the Function afterwards,
+so claim it before promoting the address.
 
 For a plain static host (GitHub Pages, Netlify, Vercel) `dist/` works from any path because
 `vite.config.ts` sets `base: './'` — but without the Function the owner panel can only report that the
